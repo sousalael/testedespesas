@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    :root {
+      --primary: #1e293b;
+      --accent: #2563eb;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--background); color: var(--text); padding: 15px; }
+    
+    .container { max-width: 1200px; margin: 0 auto; }
+    header { background-color: var(--primary); color: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    header h1 { font-size: 1.25rem; }
+    .user-badge { font-size: 0.85rem; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; }
+    
+    .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid var(--border); padding-bottom: 5px; }
+    .tab-btn { padding: 10px 15px; border: none; background: none; font-weight: 600; color: var(--text-muted); cursor: pointer; border-radius: 4px; transition: 0.2s; }
+    .tab-btn.active { background-color: var(--accent); color: white; }
+    
+    .view-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; }
+    .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 15px; color: var(--primary); border-left: 4px solid var(--accent); padding-left: 10px; }
+    
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--primary); }
+    .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; background-color: var(--surface); }
+    .form-control:focus { outline: none; border-color: var(--accent); }
+    
+    .btn { display: inline-block; width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.95rem; cursor: pointer; text-align: center; transition: 0.2s; }
+    .btn-accent { background-color: var(--accent); color: white; }
+    .btn-success { background-color: var(--success); color: white; }
+    .btn:hover { opacity: 0.9; }
+    
+    .filter-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 15px; background: #f1f5f9; padding: 12px; border-radius: 6px; }
+    @media (min-width: 768px) { .filter-grid { grid-template-columns: 2fr 1fr 1fr; } }
+    .radio-group { display: flex; gap: 15px; align-items: center; margin-bottom: 10px; }
+    .radio-label { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+    
+    .table-responsive { overflow-x: auto; margin-top: 15px; }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
+    th, td { padding: 12px; border-bottom: 1px solid var(--border); }
+    th { background-color: #f1f5f9; font-weight: 600; color: var(--primary); }
+    
+    .clickable-row { cursor: pointer; transition: background 0.15s; }
+    .clickable-row:hover { background-color: #f1f5f9; }
+    .drill-badge { background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .breadcrumbs { display: flex; gap: 8px; align-items: center; font-size: 0.85rem; margin-bottom: 15px; background: #fafafa; padding: 8px; border-radius: 4px; border: 1px solid var(--border); }
+    .breadcrumb-item { color: var(--accent); cursor: pointer; font-weight: 500; }
+    .breadcrumb-item:hover { text-decoration: underline; }
+    .breadcrumb-separator { color: var(--text-muted); }
+    .breadcrumb-current { color: var(--text); font-weight: 600; }
+    
+    .hidden { display: none !important; }
+    #loadingScreen { position: fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(15,23,42,0.8); color:white; display:flex; justify-content:center; align-items:center; flex-direction:column; z-index:9999; font-weight:600; }
+    .spinner { border: 4px solid rgba(255,255,255,0.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: white; animation: spin 1s linear infinite; margin-bottom: 10px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .preview-box { margin-top: 10px; display: none; text-align: center; border: 1px dashed var(--border); padding: 10px; border-radius: 6px; }
+    .preview-box img { max-height: 150px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+  <div id="loadingScreen" class="hidden">
+    <div class="spinner"></div>
+    <div id="loadingText">Processando...</div>
+  </div>
+
+  <div id="loginScreen" class="view-card" style="max-width: 400px; margin: 10vh auto;">
+    <h2 style="text-align:center; color: var(--primary); margin-bottom: 20px;">Acesso ao Sistema</h2>
+    <form id="formLogin" onsubmit="event.preventDefault(); executarLogin();">
+      <div class="form-group">
+        <label for="loginCpf">Digite seu CPF (apenas números):</label>
+        <input type="text" id="loginCpf" class="form-control" placeholder="Ex: 00000000000" required>
+      </div>
+      <button type="submit" class="btn btn-accent">Entrar no Painel</button>
+    </form>
+  </div>
+
+  <div id="mainApp" class="container hidden">
+    <header>
+      <h1 id="appTitle">Painel Corporativo Unificado</h1>
+      <div class="user-badge" id="userEmailBadge"></div>
+    </header>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="alternarAba('aba-ponto', this)">Folha de Ponto</button>
+      <button class="tab-btn" onclick="alternarAba('aba-despesas', this)">Lançar Despesa</button>
+      <button class="tab-btn" onclick="alternarAba('aba-dashboard', this)">Painel Analytics</button>
+    </div>
+
+    <div id="aba-ponto" class="view-card tab-content">
+      <div class="card-title">Registro de Presença em Campo</div>
+      <form id="formPonto" onsubmit="event.preventDefault(); executarSalvarPonto();">
+        <div class="form-group">
+          <label for="pontoProjeto">Selecione o Projeto do Dia:</label>
+          <select id="pontoProjeto" class="form-control" required>
+            <option value="">Carregando projetos disponíveis...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pontoTipo">Tipo de Registro:</label>
+          <select id="pontoTipo" class="form-control" required>
+            <option value="Entrada">Registrar Entrada no Projeto</option>
+            <option value="Saída">Registrar Saída do Projeto</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-accent">Bater Ponto no Projeto</button>
+      </form>
+    </div>
+
+    <div id="aba-despesas" class="view-card tab-content hidden">
+      <div class="card-title">Lançar Despesa de Viagem / Operações</div>
+      <form id="formDespesa" onsubmit="event.preventDefault(); executarEnvioDespesa();">
+        
+        <div class="form-group">
+          <label for="despProjeto">Projeto Vinculado:</label>
+          <select id="despProjeto" class="form-control" required onchange="preencherDataPadraoDespesa()">
+            <option value="">Selecione o projeto alvo...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="despTipo">Classificação da Despesa:</label>
+          <select id="despTipo" class="form-control" required>
+            <option value="">Selecione a classificação...</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="despData">Data Real do Gasto (Nota/Cupom):</label>
+          <input type="date" id="despData" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="despValor">Valor do Gasto (R$):</label>
+          <input type="number" step="0.01" id="despValor" class="form-control" placeholder="0,00" required>
+        </div>
+
+        <div class="form-group">
+          <label for="despObs">Observações / Motivos do Gasto:</label>
+          <textarea id="despObs" class="form-control" rows="3" placeholder="Insira detalhes adicionais sobre este custo..."></textarea>
+        </div>
+
+        <div class="form-group" style="background-color: #fafafa; padding: 15px; border: 2px dashed var(--border); border-radius: 6px; text-align: center;">
+          <label for="despArquivo" style="color: var(--accent); cursor:pointer; display: block; margin-bottom: 5px;">
+            Anexar Arquivo do Comprovante Fiscal (Máx 8MB)
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; font-weight: normal;">
+              DICA: Você também pode tirar um print e colar <b>(Ctrl+V)</b> em qualquer lugar desta tela.
+            </div>
+          </label>
+          <input type="file" id="despArquivo" class="form-control" accept="image/*,application/pdf" style="border:none; padding:5px 0; margin: 0 auto; width: 80%;" onchange="validarEProcessarInputArquivo(this)">
+          
+          <div id="previewContainer" class="preview-box">
+            <p style="font-size:0.75rem; color:var(--success); margin-bottom:5px; font-weight: bold;">✓ Comprovante Carregado:</p>
+            <img id="imgPreview" src="" alt="Comprovante" style="display: none;">
+            <p id="pdfPreviewNome" style="display: none; font-size: 0.9rem; color: var(--primary);"></p>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success">Validar e Registrar Despesa</button>
+      </form>
+    </div>
+
+    <div id="aba-dashboard" class="view-card tab-content hidden">
+      <div class="card-title" id="dashTituloNivel">Painel de Custos - Consolidação Financeira</div>
+      
+      <div class="filter-grid">
+        <div>
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:5px;">Tipo de Filtro Temporal:</label>
+          <div class="radio-group">
+            <label class="radio-label"><input type="radio" name="filtroTempo" value="mtd" checked onchange="ajustarControlesFiltro()"> Mês Atual (MTD)</label>
+            <label class="radio-label"><input type="radio" name="filtroTempo" value="mes" onchange="ajustarControlesFiltro()"> Por Mês Fechado</label>
+            <label class="radio-label"><input type="radio" name="filtroTempo" value="periodo" onchange="ajustarControlesFiltro()"> Intervalo Específico</label>
+          </div>
+        </div>
+        
+        <div id="blocoMes" class="hidden">
+          <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:5px;">Escolha o Mês:</label>
+          <input type="month" id="filtroMesInput" class="form-control" onchange="aplicarFiltrosEDash()">
+        </div>
+        
+        <div id="blocoPeriodo" class="hidden" style="display:contents;">
+          <div>
+            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:5px;">Data Inicial:</label>
+            <input type="date" id="filtroDataIni" class="form-control" onchange="aplicarFiltrosEDash()">
+          </div>
+          <div>
+            <label style="display:block; font-size:0.8rem; font-weight:600; margin-bottom:5px;">Data Final:</label>
+            <input type="date" id="filtroDataFim" class="form-control" onchange="aplicarFiltrosEDash()">
+          </div>
+        </div>
+      </div>
+
+      <div id="controlesAgrupamentoDiretor" class="radio-group" style="margin-bottom: 15px; background: #fafafa; padding: 10px; border-radius: 4px; border: 1px solid var(--border);">
+        <span style="font-size:0.85rem; font-weight:bold; color:var(--primary);">Agrupar Visão Inicial Por:</span>
+        <label class="radio-label"><input type="radio" name="dimensaoRaiz" value="projeto" checked onchange="alterarDimensaoRaiz()"> Projeto</label>
+        <label class="radio-label"><input type="radio" name="dimensaoRaiz" value="supervisor" onchange="alterarDimensaoRaiz()"> Supervisor</label>
+        <label class="radio-label"><input type="radio" name="dimensaoRaiz" value="tipoDespesa" onchange="alterarDimensaoRaiz()"> Tipo de Despesa</label>
+      </div>
+
+      <div id="dashBreadcrumbs" class="breadcrumbs"></div>
+
+      <div style="margin-bottom: 15px; text-align: right; font-size: 1.1rem; font-weight: bold; color: var(--primary);">
+        Total no Período Selecionado: <span id="dashTotalGeral" style="color:var(--success);">R$ 0,00</span>
+      </div>
+
+      <div class="table-responsive">
+        <table id="tabelaDashboard">
+          <thead id="cabecalhoDashboard"></thead>
+          <tbody id="corpoDashboard"></tbody>
+        </table>
+      </div>
+      
+      <button class="btn btn-accent" style="margin-top:20px; max-width:250px;" onclick="exportarRelatorioFiltroCSV()">Exportar Relatório (.CSV)</button>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "<?= ScriptApp.getService().getUrl() ?>";
+    let BANCO_DADOS = { usuario: "", cpf: "", isDiretor: false, funcao: "", projetos: [], categorias: [], despesas: [] };
+    let despesasFiltradas = [];
+    let hierarquiaAtual = { nivel: 0, filtroNivel0: "", filtroNivel1: "", chaveRaiz: "projeto" };
+
+    let arquivoBase64Global = "";
+    let arquivoMimeTypeGlobal = "";
+    let arquivoNomeGlobal = "";
+
+    window.addEventListener('DOMContentLoaded', () => {
+      definirDataPadraoMTD();
+    });
+
+    // --- LÓGICA DE CAPTURA DO CTRL+V (COLA) ---
+    window.addEventListener('paste', function(e) {
+      // Verifica se o usuário está na aba de despesas
+      if (document.getElementById('aba-despesas').classList.contains('hidden')) return;
+
+      const items = e.clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+          const arquivoColado = items[i].getAsFile();
+          const extensao = arquivoColado.type.split('/')[1] || 'png';
+          const nomeGerado = "print_tela_" + new Date().getTime() + "." + extensao;
+          
+          processarEConverterArquivo(arquivoColado, nomeGerado);
+          e.preventDefault(); // Impede o comportamento padrão de colar em caixas de texto
+          break;
+        }
+      }
+    });
+
+    function validarEProcessarInputArquivo(input) {
+      const arquivo = input.files[0];
+      if (!arquivo) return;
+      processarEConverterArquivo(arquivo, arquivo.name);
+    }
+
+    function processarEConverterArquivo(arquivo, nomeArquivo) {
+      if (arquivo.size > 8 * 1024 * 1024) {
+        alert("⚠️ ARQUIVO RECUSADO! Tamanho máximo é 8MB.");
+        document.getElementById("despArquivo").value = "";
+        document.getElementById("previewContainer").style.display = "none";
+        return;
+      }
+      
+      arquivoMimeTypeGlobal = arquivo.type;
+      arquivoNomeGlobal = nomeArquivo;
+      
+      const leitor = new FileReader();
+      leitor.onload = function(e) {
+        arquivoBase64Global = e.target.result;
+        const container = document.getElementById("previewContainer");
+        const imgEl = document.getElementById("imgPreview");
+        const pdfEl = document.getElementById("pdfPreviewNome");
+
+        container.style.display = "block";
+
+        if (arquivoMimeTypeGlobal.startsWith("image/")) {
+          imgEl.src = arquivoBase64Global;
+          imgEl.style.display = "inline-block";
+          pdfEl.style.display = "none";
+        } else {
+          imgEl.style.display = "none";
+          pdfEl.innerText = "📄 Documento anexado: " + nomeArquivo;
+          pdfEl.style.display = "block";
+        }
+      };
+      leitor.readAsDataURL(arquivo);
+    }
+    // -------------------------------------------
+
+    function showLoading(txt) { document.getElementById("loadingText").innerText = txt; document.getElementById("loadingScreen").classList.remove("hidden"); }
+    function hideLoading() { document.getElementById("loadingScreen").classList.add("hidden"); }
+
+    function alternarAba(idAba, botao) {
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+      document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+      document.getElementById(idAba).classList.remove("hidden");
+      botao.classList.add("active");
+      
+      if(idAba === 'aba-dashboard') {
+        hierarquiaAtual.nivel = 0;
+        montarDashboardHierarquico();
+      }
+    }
+
+    function executarLogin() {
+      const cpf = document.getElementById("loginCpf").value.trim();
+      if(!cpf) return;
+      
+      showLoading("Autenticando colaborador...");
+      
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: "autenticarUsuario", cpf: cpf })
+      })
+      .then(r => r.json())
+      .then(res => {
+        if(res.success) {
+          BANCO_DADOS.usuario = res.nome;
+          BANCO_DADOS.cpf = res.cpf;
+          BANCO_DADOS.funcao = res.funcao;
+          BANCO_DADOS.isDiretor = res.isDiretor;
+          
+          document.getElementById("userEmailBadge").innerText = `${res.nome} | ${res.funcao}`;
+          document.getElementById("loginScreen").classList.add("hidden");
+          document.getElementById("mainApp").classList.remove("hidden");
+          
+          if(!res.isDiretor) {
+            document.getElementById("controlesAgrupamentoDiretor").classList.add("hidden");
+            hierarquiaAtual.chaveRaiz = "projeto"; 
+          }
+          
+          buscarCargaInicialServidor();
+        } else {
+          alert("Acesso negado: " + res.error);
+        }
+      })
+      .catch(err => alert("Erro de conexão: " + err))
+      .finally(hideLoading);
+    }
+
+    function buscarCargaInicialServidor() {
+      showLoading("Carregando projetos e históricos...");
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: "buscarDadosIniciais", usuarioNome: BANCO_DADOS.usuario, isDiretor: BANCO_DADOS.isDiretor })
+      })
+      .then(r => r.json())
+      .then(res => {
+        if(res.success) {
+          BANCO_DADOS.projetos = res.projetos;
+          BANCO_DADOS.categorias = res.categorias;
+          BANCO_DADOS.despesas = res.despesas;
+          
+          popularMenusSuspensos();
+          aplicarFiltrosEDash();
+        } else {
+          alert("Falha ao carregar dados: " + res.error);
+        }
+      })
+      .catch(err => alert("Erro na rede: " + err))
+      .finally(hideLoading);
+    }
+
+    function popularMenusSuspensos() {
+      const selectPonto = document.getElementById("pontoProjeto");
+      selectPonto.innerHTML = '<option value="">Selecione o projeto...</option>';
+      
+      const selectDespProj = document.getElementById("despProjeto");
+      selectDespProj.innerHTML = '<option value="">Selecione o projeto...</option>';
+      
+      BANCO_DADOS.projetos.forEach((p, idx) => {
+        const txtOption = `${p.cliente} (${p.unidade}) - ${p.data}`;
+        const opt1 = document.createElement("option"); opt1.value = idx; opt1.text = txtOption; selectPonto.appendChild(opt1);
+        const opt2 = document.createElement("option"); opt2.value = idx; opt2.text = txtOption; selectDespProj.appendChild(opt2);
+      });
+
+      const selectTipo = document.getElementById("despTipo");
+      selectTipo.innerHTML = '<option value="">Selecione a classificação...</option>';
+      BANCO_DADOS.categorias.forEach(cat => {
+        const opt = document.createElement("option"); opt.value = cat; opt.text = cat; selectTipo.appendChild(opt);
+      });
+    }
+
+    function preencherDataPadraoDespesa() {
+      const idx = document.getElementById("despProjeto").value;
+      const inputData = document.getElementById("despData");
+      if (idx === "") { inputData.value = ""; return; }
+      
+      const dataProjetoBR = BANCO_DADOS.projetos[idx].data; 
+      const partes = dataProjetoBR.split("/");
+      if (partes.length === 3) inputData.value = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+
+    function executarEnvioDespesa() {
+      const projIdx = document.getElementById("despProjeto").value;
+      const tipo = document.getElementById("despTipo").value;
+      const dataGasto = document.getElementById("despData").value;
+      const valor = document.getElementById("despValor").value;
+      const obs = document.getElementById("despObs").value.trim();
+
+      if(!projIdx || !tipo || !dataGasto || !valor || !arquivoBase64Global) {
+        alert("Preencha todos os campos e anexe o comprovante (ou cole um print)."); return;
+      }
+
+      const projetoObj = BANCO_DADOS.projetos[projIdx];
+      const dataGastoBR = dataGasto.split("-").reverse().join("/");
+      const dataProjetoBR = projetoObj.data;
+
+      if (dataGastoBR !== dataProjetoBR) {
+        const msg = `Você informou que a nota fiscal é do dia ${dataGastoBR}, mas o projeto ("${projetoObj.cliente}") está agendado para o dia ${dataProjetoBR}.\nA data e o projeto estão corretos?`;
+        if (!confirm(msg)) return; 
+      }
+
+      showLoading("Salvando despesa e comprovante no Drive...");
+      
+      const payload = {
+        action: "salvarDespesa", usuarioNome: BANCO_DADOS.usuario, dataProjeto: dataProjetoBR, cliente: projetoObj.cliente,
+        unidade: projetoObj.unidade, tipoDespesa: tipo, valor: valor, observacao: obs,
+        arquivoBase64: arquivoBase64Global, mimeType: arquivoMimeTypeGlobal, nomeArquivo: arquivoNomeGlobal
+      };
+
+      fetch(SCRIPT_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload)
+      })
+      .then(r => r.json())
+      .then(res => {
+        if(res.success) {
+          alert("✓ Despesa lançada com sucesso!");
+          document.getElementById("formDespesa").reset();
+          document.getElementById("despArquivo").value = "";
+          document.getElementById("previewContainer").style.display = "none";
+          arquivoBase64Global = "";
+          buscarCargaInicialServidor();
+        } else {
+          alert("Erro ao gravar despesa: " + res.error);
+        }
+      })
+      .catch(err => alert("Erro na comunicação: " + err))
+      .finally(hideLoading);
+    }
+
+    function executarSalvarPonto() {
+      const projIdx = document.getElementById("pontoProjeto").value;
+      const tipo = document.getElementById("pontoTipo").value;
+      if(!projIdx) { alert("Selecione o projeto."); return; }
+      
+      const p = BANCO_DADOS.projetos[projIdx];
+      showLoading("Registrando Ponto...");
+      
+      fetch(SCRIPT_URL, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: "salvarPonto", usuarioNome: BANCO_DADOS.usuario, cliente: p.cliente, unidade: p.unidade, tipoMarcacao: tipo })
+      })
+      .then(r => r.json())
+      .then(res => {
+        hideLoading();
+        if(res.success) {
+          alert("✓ Ponto registrado com sucesso para: " + BANCO_DADOS.usuario);
+          document.getElementById("formPonto").reset();
+        } else {
+          alert("Erro: " + res.error);
+        }
+      });
+    }
+
+    function definirDataPadraoMTD() {
+      const hoje = new Date();
+      const ano = hoje.getFullYear();
+      const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      const dia = String(hoje.getDate()).padStart(2, '0');
+      document.getElementById("filtroDataIni").value = `${ano}-${mes}-01`;
+      document.getElementById("filtroDataFim").value = `${ano}-${mes}-${dia}`;
+      document.getElementById("filtroMesInput").value = `${ano}-${mes}`;
+    }
+
+    function ajustarControlesFiltro() {
+      const tipo = document.querySelector('input[name="filtroTempo"]:checked').value;
+      document.getElementById("blocoMes").classList.add("hidden");
+      document.getElementById("blocoPeriodo").classList.add("hidden");
+      if(tipo === "mes") document.getElementById("blocoMes").classList.remove("hidden");
+      else if (tipo === "periodo") document.getElementById("blocoPeriodo").classList.remove("hidden");
+      aplicarFiltrosEDash();
+    }
+
+    function aplicarFiltrosEDash() {
+      const tipoFiltro = document.querySelector('input[name="filtroTempo"]:checked').value;
+      let dInicio, dFim;
+
+      if (tipoFiltro === "mtd") {
+        const hoje = new Date();
+        dInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1); dFim = hoje;
+      } else if (tipoFiltro === "mes") {
+        const mesVal = document.getElementById("filtroMesInput").value;
+        if(!mesVal) return;
+        const partes = mesVal.split("-");
+        dInicio = new Date(partes[0], partes[1] - 1, 1); dFim = new Date(partes[0], partes[1], 0);
+      } else {
+        const ini = document.getElementById("filtroDataIni").value; const fim = document.getElementById("filtroDataFim").value;
+        if(!ini || !fim) return;
+        dInicio = new Date(ini + "T00:00:00"); dFim = new Date(fim + "T23:59:59");
+      }
+
+      despesasFiltradas = BANCO_DADOS.despesas.filter(d => {
+        const p = d.dataProjeto.split("/");
+        const dataProjObj = new Date(p[2], p[1] - 1, p[0]);
+        return dataProjObj >= dInicio && dataProjObj <= dFim;
+      });
+      montarDashboardHierarquico();
+    }
+
+    function alterarDimensaoRaiz() {
+      hierarquiaAtual.chaveRaiz = document.querySelector('input[name="dimensaoRaiz"]:checked').value;
+      hierarquiaAtual.nivel = 0; montarDashboardHierarquico();
+    }
+
+    function montarDashboardHierarquico() {
+      const cabecalho = document.getElementById("cabecalhoDashboard"); const corpo = document.getElementById("corpoDashboard");
+      const breadcrumbs = document.getElementById("dashBreadcrumbs");
+      let totalGeralAcumulado = 0; corpo.innerHTML = "";
+      const labelDimensao = { projeto: "Projeto/Cliente", supervisor: "Supervisor", tipoDespesa: "Tipo de Despesa" };
+      const chaveRaiz = hierarquiaAtual.chaveRaiz;
+      let chaveSecundaria = "supervisor";
+      if (chaveRaiz === "supervisor" || chaveRaiz === "tipoDespesa") chaveSecundaria = "projeto";
+
+      if (hierarquiaAtual.nivel === 0) {
+        document.getElementById("dashTituloNivel").innerText = `Painel Financeiro - Agrupado por ${labelDimensao[chaveRaiz]}`;
+        breadcrumbs.innerHTML = `<span class="breadcrumb-current">Início (${labelDimensao[chaveRaiz]})</span>`;
+        cabecalho.innerHTML = `<tr><th>${labelDimensao[chaveRaiz]}</th><th>Ação</th><th>Total Acumulado</th></tr>`;
+        let agrupado = {};
+        despesasFiltradas.forEach(d => {
+          let idAgrupador = chaveRaiz === "projeto" ? `${d.cliente} (${d.unidade})` : d[chaveRaiz];
+          agrupado[idAgrupador] = (agrupado[idAgrupador] || 0) + d.valor;
+          totalGeralAcumulado += d.valor;
+        });
+        for (let chave in agrupado) {
+          const linha = document.createElement("tr"); linha.className = "clickable-row";
+          linha.onclick = () => { hierarquiaAtual.filtroNivel0 = chave; hierarquiaAtual.nivel = 1; montarDashboardHierarquico(); };
+          linha.innerHTML = `<td><b>${chave}</b></td><td><span class="drill-badge">Drill Down ➔</span></td><td>${agrupado[chave].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>`;
+          corpo.appendChild(linha);
+        }
+      } 
+      else if (hierarquiaAtual.nivel === 1) {
+        document.getElementById("dashTituloNivel").innerText = `Filtro Especialista: ${hierarquiaAtual.filtroNivel0}`;
+        breadcrumbs.innerHTML = `<span class="breadcrumb-item" onclick="hierarquiaAtual.nivel=0; montarDashboardHierarquico();">Início</span><span class="breadcrumb-separator">/</span><span class="breadcrumb-current">${hierarquiaAtual.filtroNivel0}</span>`;
+        cabecalho.innerHTML = `<tr><th>${labelDimensao[chaveSecundaria]}</th><th>Ação</th><th>Total Parcial</th></tr>`;
+        let dadosN1 = despesasFiltradas.filter(d => {
+          let id = chaveRaiz === "projeto" ? `${d.cliente} (${d.unidade})` : d[chaveRaiz]; return id === hierarquiaAtual.filtroNivel0;
+        });
+        let agrupadoN1 = {};
+        dadosN1.forEach(d => {
+          let idSub = chaveSecundaria === "projeto" ? `${d.cliente} (${d.unidade})` : d[chaveSecundaria];
+          agrupadoN1[idSub] = (agrupadoN1[idSub] || 0) + d.valor; totalGeralAcumulado += d.valor;
+        });
+        for (let sub in agrupadoN1) {
+          const linha = document.createElement("tr"); linha.className = "clickable-row";
+          linha.onclick = () => { hierarquiaAtual.filtroNivel1 = sub; hierarquiaAtual.nivel = 2; montarDashboardHierarquico(); };
+          linha.innerHTML = `<td>${sub}</td><td><span class="drill-badge">Ver Extrato ➔</span></td><td>${agrupadoN1[sub].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</td>`;
+          corpo.appendChild(linha);
+        }
+      }
+      else if (hierarquiaAtual.nivel === 2) {
+        document.getElementById("dashTituloNivel").innerText = `Abertura Analítica Fiscal`;
+        breadcrumbs.innerHTML = `<span class="breadcrumb-item" onclick="hierarquiaAtual.nivel=0; montarDashboardHierarquico();">Início</span><span class="breadcrumb-separator">/</span><span class="breadcrumb-item" onclick="hierarquiaAtual.nivel=1; montarDashboardHierarquico();">${hierarquiaAtual.filtroNivel0}</span><span class="breadcrumb-separator">/</span><span class="breadcrumb-current">${hierarquiaAtual.filtroNivel1}</span>`;
+        cabecalho.innerHTML = `<tr><th>Data Projeto</th><th>Tipo</th><th>Supervisor</th><th>Doc. Fiscal</th><th>Valor</th></tr>`;
+        let extrato = despesasFiltradas.filter(d => {
+          let idRaiz = chaveRaiz === "projeto" ? `${d.cliente} (${d.unidade})` : d[chaveRaiz];
+          let idSub = chaveSecundaria === "projeto" ? `${d.cliente} (${d.unidade})` : d[chaveSecundaria];
+          return idRaiz === hierarquiaAtual.filtroNivel0 && idSub === hierarquiaAtual.filtroNivel1;
+        });
+        extrato.forEach(d => {
+          totalGeralAcumulado += d.valor; const linha = document.createElement("tr");
+          let linkDocs = d.comprovanteUrl ? `<a href="${d.comprovanteUrl}" target="_blank" style="color:var(--accent);">Abrir ↗</a>` : `-`;
+          linha.innerHTML = `<td>${d.dataProjeto}</td><td>${d.tipoDespesa}</td><td>${d.supervisor.split(' ')[0]}</td><td>${linkDocs}</td><td><b>${d.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b></td>`;
+          corpo.appendChild(linha);
+        });
+      }
+      document.getElementById("dashTotalGeral").innerText = totalGeralAcumulado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function exportarRelatorioFiltroCSV() {
+      if(despesasFiltradas.length === 0) { alert("Sem dados para exportar."); return; }
+      let csvContent = ["Data do projeto", "Data lançamento", "Cliente", "Unidade", "Tipo de despesa", "Valor", "Observação", "Nome"].join(";") + "\n";
+      despesasFiltradas.forEach(d => {
+        const dataLancExib = (d.dataLancamento === d.dataProjeto) ? "" : d.dataLancamento;
+        const obsLimpa = (d.observacao || "").replace(/\n/g, " ").replace(/;/g, ",");
+        const linha = [d.dataProjeto, dataLancExib, d.cliente, d.unidade, d.tipoDespesa, d.valor.toFixed(2).replace('.', ','), `"${obsLimpa}"`, d.supervisor.toUpperCase()];
+        csvContent += linha.join(";") + "\n";
+      });
+      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(blob));
+      link.setAttribute("download", `RELATORIO_FINANCEIRO_${new Date().getTime()}.csv`);
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    }
+  </script>
+</body>
+</html>
