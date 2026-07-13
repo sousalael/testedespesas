@@ -3,59 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Corporativo</title>
+  <title>Sistema de Gestão de Despesas Operacionais</title>
   <style>
-    :root { --primary: #1e293b; --accent: #2563eb; --success: #16a34a; --background: #f8fafc; --surface: #ffffff; }
-    * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
+    :root { --primary: #0f172a; --accent: #2563eb; --success: #16a34a; --background: #f1f5f9; --surface: #ffffff; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background-color: var(--background); padding: 20px; color: #333; }
     
     .container { max-width: 800px; margin: 0 auto; }
-    .card { background: var(--surface); border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .card { background: var(--surface); border: 1px solid #cbd5e1; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
     
-    h2 { margin-bottom: 15px; color: var(--primary); }
+    h2 { margin-bottom: 20px; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
     .hidden { display: none !important; }
     
     .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
-    input, select { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; }
+    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--primary); }
+    input, select { width: 100%; padding: 12px; border: 1px solid #94a3b8; border-radius: 6px; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); }
     
-    .btn { background: var(--accent); color: white; border: none; padding: 12px; width: 100%; font-size: 1rem; border-radius: 4px; cursor: pointer; font-weight: bold; }
+    .btn { background: var(--accent); color: white; border: none; padding: 14px; width: 100%; font-size: 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
     .btn-success { background: var(--success); }
     .btn:hover { opacity: 0.9; }
 
     /* Navegação */
-    .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 20px; }
-    .nav-btn { background: #e2e8f0; color: var(--primary); border: none; padding: 15px; border-radius: 6px; cursor: pointer; font-weight: bold; text-align: center; }
+    .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 25px; }
+    .nav-btn { background: #e2e8f0; color: var(--primary); border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; text-align: center; transition: 0.2s; }
     .nav-btn:hover { background: #cbd5e1; }
     .nav-btn.active { background: var(--accent); color: white; }
 
-    /* Área de Anexo */
-    .drop-zone { border: 2px dashed #cbd5e1; padding: 20px; text-align: center; cursor: pointer; border-radius: 6px; background: #fafafa; }
-    #previewImg { max-width: 100%; max-height: 200px; margin-top: 10px; display: none; border-radius: 4px; }
+    /* Upload e Imagens */
+    .drop-zone { border: 2px dashed #94a3b8; padding: 30px 20px; text-align: center; cursor: pointer; border-radius: 8px; background: #f8fafc; transition: background 0.2s; }
+    .drop-zone:hover { background: #f1f5f9; }
+    #previewImg { max-width: 100%; max-height: 250px; margin-top: 15px; display: none; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
     
-    #loading { text-align: center; font-weight: bold; color: var(--accent); margin-bottom: 15px; }
+    #loading { text-align: center; font-weight: bold; color: var(--accent); margin-bottom: 20px; font-size: 1.1rem; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <div id="loading" class="hidden">Processando requisição...</div>
+    <div id="loading" class="hidden">🔄 Processando...</div>
 
     <div id="telaLogin" class="card">
-      <h2 style="text-align: center;">Acesso ao Sistema</h2>
+      <h2 style="text-align: center; border: none;">Acesso Corporativo</h2>
       <form id="formLogin">
         <div class="form-group">
           <label>CPF do Colaborador (Apenas números):</label>
-          <input type="text" id="cpfInput" required placeholder="Digite seu CPF">
+          <input type="text" id="cpfInput" required placeholder="Ex: 00000000000">
         </div>
-        <button type="button" class="btn" onclick="executarLogin()">Entrar</button>
+        <button type="button" class="btn" onclick="executarLogin()">Validar Acesso</button>
       </form>
     </div>
 
     <div id="appPrincipal" class="hidden">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3 id="boasVindas">Bem-vindo</h3>
-        <span id="badgeAcesso" style="background: var(--primary); color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem;">Nível</span>
+      <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 25px;">
+        <h3 id="boasVindas" style="margin: 0; color: var(--primary);">Bem-vindo</h3>
+        <span id="badgeAcesso" style="background: var(--primary); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;">Nível</span>
       </div>
 
       <div class="nav-grid" id="menuNavegacao">
@@ -69,17 +71,17 @@
         <h2>Registro de Ponto</h2>
         <form id="formPonto">
           <div class="form-group">
-            <label>Projeto/Local:</label>
-            <input type="text" id="pontoProjeto" required placeholder="Nome do projeto">
+            <label>Centro de Custo / Projeto:</label>
+            <input type="text" id="pontoProjeto" required placeholder="Nome do cliente ou unidade">
           </div>
           <div class="form-group">
-            <label>Tipo:</label>
+            <label>Tipo de Batida:</label>
             <select id="pontoTipo">
-              <option value="Entrada">Entrada</option>
-              <option value="Saída">Saída</option>
+              <option value="Entrada">Entrada (Início de Turno)</option>
+              <option value="Saída">Saída (Fim de Turno)</option>
             </select>
           </div>
-          <button type="button" class="btn btn-success" onclick="salvarPonto()">Bater Ponto</button>
+          <button type="button" class="btn btn-success" onclick="salvarPonto()">Registrar Horário</button>
         </form>
       </div>
 
@@ -87,48 +89,45 @@
         <h2>Lançamento de Despesa</h2>
         <form id="formDespesa">
           <div class="form-group">
-            <label>Projeto Vinculado:</label>
-            <input type="text" id="despProjeto" required placeholder="Nome do projeto">
+            <label>Projeto / Unidade Vinculada:</label>
+            <input type="text" id="despProjeto" required placeholder="Nome do cliente ou unidade">
           </div>
           <div class="form-group">
-            <label>Valor (R$):</label>
-            <input type="number" id="despValor" step="0.01" required>
+            <label>Valor Total (R$):</label>
+            <input type="number" id="despValor" step="0.01" required placeholder="0.00">
           </div>
           <div class="form-group">
-            <label>Comprovante (Clique, ou use <b>Ctrl+V</b> para colar):</label>
+            <label>Comprovante da despesa (Tire um Print e use <b>Ctrl+V</b>):</label>
             <div class="drop-zone" onclick="document.getElementById('despArquivo').click()">
-              Clique aqui para anexar arquivo ou pressione Ctrl+V com um print
+              📸 <b>Cole o print (Ctrl+V)</b> em qualquer lugar desta tela<br>ou clique aqui para buscar um arquivo.
               <input type="file" id="despArquivo" class="hidden" accept="image/*" onchange="processarImagem(this.files[0])">
             </div>
             <img id="previewImg">
           </div>
-          <button type="button" class="btn btn-success" onclick="salvarDespesa()">Enviar Despesa</button>
+          <button type="button" class="btn btn-success" onclick="salvarDespesa()">Enviar Comprovante</button>
         </form>
       </div>
 
       <div id="tela-gestao" class="card modulo-tela hidden">
-        <h2>Painel de Gestão de Equipe</h2>
-        <p>Área restrita. Aqui entram os relatórios de gestão de equipes e projetos encerrados.</p>
+        <h2>Gestão de Equipes e Operações</h2>
+        <p>Módulo de controle estratégico. Relatórios consolidados de projetos e inventários aparecerão aqui.</p>
       </div>
-
       <div id="tela-bi" class="card modulo-tela hidden">
-        <h2>Visões de Business Intelligence</h2>
-        <p>Área restrita. Aqui entram os gráficos e indicadores gerenciais.</p>
+        <h2>Inteligência de Negócios (BI)</h2>
+        <p>Módulo analítico. Gráficos de performance e custos da operação.</p>
       </div>
-
     </div>
   </div>
 
   <script>
-    // ==============================================================
-    // SUBSTITUA A URL ABAIXO PELO LINK /exec DO GOOGLE APPS SCRIPT
-    // ==============================================================
-    const URL_DO_WEB_APP = "https://script.google.com/macros/s/AKfycbzyRsRlmFBm3KLdYIklWmrqAb9q4ap4vr12vDtKhk0eCsHcraqbpM7NBvVHO2aT1oeZ/exec"; 
+    // =========================================================================
+    // 1. COLOQUE AQUI A URL DO GOOGLE APPS SCRIPT (O LINK QUE TERMINA EM /exec)
+    // =========================================================================
+    const URL_DO_WEB_APP = "https://script.google.com/macros/s/AKfycbwXWeAARWvq8o32OyAKpu6zmxlZeEO__0uUxD9xL71vbUuvuXVb3z7sMOYYHNdwoF71/exec"; 
     
     let usuarioLogado = {};
     let arquivoBase64Global = "";
 
-    // FUNÇÕES DE UI
     function showLoading() { document.getElementById('loading').classList.remove('hidden'); }
     function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
 
@@ -139,28 +138,25 @@
       if (botao) botao.classList.add('active');
     }
 
-    // COMUNICAÇÃO COM O BACKEND (FETCH)
+    // Comunicação assíncrona robusta com o Google Script
     async function enviarParaBackend(payload) {
       showLoading();
       try {
-        // Envio como text/plain evita problemas de bloqueio de CORS pelo navegador no Github Pages
         const response = await fetch(URL_DO_WEB_APP, {
           method: 'POST',
-          headers: { 'Content-Type': 'text/plain' }, 
-          body: JSON.stringify(payload)
+          body: JSON.stringify(payload) 
         });
         const data = await response.json();
         hideLoading();
         return data;
       } catch (error) {
         hideLoading();
-        alert("Erro de conexão com o servidor.");
+        alert("Erro de comunicação com o servidor. Verifique a URL do Web App.");
         console.error(error);
         return { success: false };
       }
     }
 
-    // LOGIN E CONTROLE DE ACESSO
     async function executarLogin() {
       const cpf = document.getElementById('cpfInput').value.trim();
       if (!cpf) return alert("Digite o CPF.");
@@ -173,22 +169,19 @@
         document.getElementById('appPrincipal').classList.remove('hidden');
         
         document.getElementById('boasVindas').innerText = "Olá, " + usuarioLogado.nome;
-        document.getElementById('badgeAcesso').innerText = "Acesso: " + usuarioLogado.nivel.toUpperCase();
+        document.getElementById('badgeAcesso').innerText = usuarioLogado.nivel.toUpperCase();
 
-        // Libera botões restritos se o nível for Gestor/Admin
-        if (usuarioLogado.nivel === "gestor") {
+        if (usuarioLogado.nivel === "diretoria") {
           document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('hidden'));
         }
       } else {
-        alert(resposta.mensagem || "CPF não encontrado ou sem permissão.");
+        alert(resposta.mensagem || "Credenciais não localizadas.");
       }
     }
 
-    // LÓGICA DE COMPROVANTES (Ctrl+V)
+    // Processamento de imagens (Ctrl+V)
     window.addEventListener('paste', e => {
-      // Só tenta processar imagem se a tela de despesa estiver aberta
       if (document.getElementById('tela-despesa').classList.contains('hidden')) return;
-      
       const items = e.clipboardData.items;
       for (let i = 0; i < items.length; i++) {
         if (items[i].type.indexOf("image") !== -1) {
@@ -201,6 +194,8 @@
 
     function processarImagem(file) {
       if (!file) return;
+      if (file.size > 5 * 1024 * 1024) return alert("O arquivo excede o limite de 5MB. Tente uma imagem menor.");
+      
       const reader = new FileReader();
       reader.onload = e => {
         arquivoBase64Global = e.target.result;
@@ -211,43 +206,35 @@
       reader.readAsDataURL(file);
     }
 
-    // ENVIO DE DADOS (PONTO E DESPESA)
     async function salvarPonto() {
       const projeto = document.getElementById('pontoProjeto').value;
       const tipo = document.getElementById('pontoTipo').value;
-      if (!projeto) return alert("Preencha o projeto.");
+      if (!projeto) return alert("Preencha o campo do projeto.");
 
-      const resposta = await enviarParaBackend({
-        action: "salvarPonto",
-        cpf: usuarioLogado.cpf,
-        projeto: projeto,
-        tipo: tipo
-      });
+      const resposta = await enviarParaBackend({ action: "salvarPonto", cpf: usuarioLogado.cpf, nome: usuarioLogado.nome, projeto: projeto, tipo: tipo });
 
       if (resposta.success) {
-        alert("Ponto registrado com sucesso!");
+        alert("Ponto validado e registrado no sistema!");
         document.getElementById('formPonto').reset();
+      } else {
+        alert("Erro ao salvar: " + resposta.mensagem);
       }
     }
 
     async function salvarDespesa() {
       const projeto = document.getElementById('despProjeto').value;
       const valor = document.getElementById('despValor').value;
-      if (!projeto || !valor || !arquivoBase64Global) return alert("Preencha todos os campos e anexe o comprovante.");
+      if (!projeto || !valor || !arquivoBase64Global) return alert("Preencha o projeto, valor e anexe o comprovante.");
 
-      const resposta = await enviarParaBackend({
-        action: "salvarDespesa",
-        cpf: usuarioLogado.cpf,
-        projeto: projeto,
-        valor: valor,
-        arquivo: arquivoBase64Global
-      });
+      const resposta = await enviarParaBackend({ action: "salvarDespesa", cpf: usuarioLogado.cpf, nome: usuarioLogado.nome, projeto: projeto, valor: valor, arquivo: arquivoBase64Global });
 
       if (resposta.success) {
-        alert("Despesa registrada com sucesso!");
+        alert("Despesa documentada com sucesso!");
         document.getElementById('formDespesa').reset();
         document.getElementById('previewImg').style.display = 'none';
         arquivoBase64Global = "";
+      } else {
+        alert("Erro ao registrar: " + resposta.mensagem);
       }
     }
   </script>
