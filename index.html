@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Sistema Integrado de Gestão - Formula Code</title>
+  <title>Painel Integrado de Gestão - Formula Code</title>
   <style>
     :root { --primary: #0F172A; --accent: #3B82F6; --bg: #F8FAFC; --text: #334155; --border: #E2E8F0; }
     body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
@@ -15,6 +15,7 @@
     button:hover { opacity: 0.9; }
     button.btn-danger { background-color: #EF4444; }
     button.btn-secondary { background-color: #64748B; }
+    button.btn-green { background-color: #10B981; }
     
     table { width: 100%; border-collapse: collapse; margin-top: 15px; }
     th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
@@ -24,13 +25,15 @@
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     @media(max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
 
-    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+    .nav-tabs { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
     .nav-tabs button { width: auto; background: none; color: var(--text); border: 1px solid var(--border); margin: 0; }
-    .nav-tabs button.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .nav-tabs button.active { background: var(--primary); color: white; border-color: var(--primary); }
     
     .status-msg { margin: 10px 0; padding: 10px; border-radius: 6px; font-weight: 500; text-align: center; }
     .success { background: #D1FAE5; color: #065F46; }
     .error { background: #FEE2E2; color: #991B1B; }
+
+    .kiosk-mode { background: #F1F5F9; border: 2px dashed #CBD5E1; padding: 30px; border-radius: 10px; text-align: center; }
   </style>
 </head>
 <body>
@@ -38,14 +41,46 @@
 <div class="container">
   <div id="msgGeral" class="status-msg hidden"></div>
 
-  <div id="view-auth">
-    <h2 id="auth-title">Autenticação</h2>
-    <p id="auth-subtitle">Acesso Restrito ao Painel Administrativo</p>
-    <input type="text" id="cpfAuth" placeholder="Digite seu CPF" maxlength="14" oninput="mascaraCPF(this)">
-    <button id="btnAcessar" onclick="processarAutenticacao()">Acessar Painel</button>
+  <div id="view-login">
+    <h2>Abertura de Operação</h2>
+    <p>Para iniciar a operação e registrar sua presença, selecione o projeto do dia e informe seu CPF.</p>
     
-    <div id="menuPontoExtras" class="hidden" style="margin-top: 25px; border-top: 2px dashed var(--border); padding-top: 20px;">
-      <div style="display: flex; gap: 10px;">
+    <label>Projeto Ativo:</label>
+    <select id="loginProjeto">
+      <option value="">Carregando projetos...</option>
+    </select>
+    
+    <label>CPF do Gestor:</label>
+    <input type="text" id="loginCpf" placeholder="Digite seu CPF" maxlength="14" oninput="mascaraCPF(this)">
+    
+    <button id="btnAcessar" onclick="executarLogin()">Iniciar Operação</button>
+  </div>
+
+  <div id="view-dashboard" class="hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #F8FAFC; padding: 10px 15px; border-radius: 8px;">
+      <div style="font-size: 14px;">
+        <strong>Gestor:</strong> <span id="lblGestor"></span><br>
+        <strong>Projeto Ativo:</strong> <span id="lblProjeto"></span>
+      </div>
+      <button style="width: auto; padding: 8px 15px; background: #64748B;" onclick="location.reload()">Sair / Trocar Projeto</button>
+    </div>
+
+    <div class="nav-tabs">
+      <button id="tabPonto" class="active" onclick="mudarAba('ponto')">1. Check-in da Equipe (Totem)</button>
+      <button id="tabGestao" onclick="mudarAba('gestao')">2. Gestão de Equipe & Despesas</button>
+      <button id="tabRelatorios" onclick="mudarAba('relatorios')">3. Relatórios & Pesquisa</button>
+    </div>
+
+    <div id="abaPonto">
+      <div class="kiosk-mode">
+        <h2 style="margin-bottom: 5px;">Registro de Presença</h2>
+        <p style="color: #64748B; margin-bottom: 25px;">Por favor, informe o CPF para confirmar participação na operação atual.</p>
+        
+        <input type="text" id="pontoCpf" placeholder="CPF do Colaborador" maxlength="14" oninput="mascaraCPF(this)" style="max-width: 400px; margin: 0 auto; display: block; font-size: 18px; text-align: center;">
+        <button id="btnBaterPonto" onclick="baterPontoEquipe()" style="max-width: 400px; display: block; margin: 15px auto; padding: 15px; font-size: 16px;">Confirmar Presença</button>
+      </div>
+
+      <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px; display: flex; gap: 10px;">
         <button class="btn-secondary" onclick="alternarDiv('formCadastroColab')">Cadastrar Novo Colaborador</button>
         <button class="btn-secondary" onclick="alternarDiv('formAlterarPix')">Alterar Chave Pix</button>
       </div>
@@ -60,80 +95,80 @@
           <option value="EMAIL">Tipo de Chave: E-mail</option>
         </select>
         <input type="text" id="cadPix" placeholder="Chave Pix" oninput="aplicarMascaraPix(this)">
-        <button onclick="salvarNovoColaborador()">Salvar Novo Cadastro</button>
+        <button onclick="salvarNovoColaborador()">Salvar Cadastro</button>
       </div>
 
       <div id="formAlterarPix" class="hidden" style="background:#F1F5F9; padding: 20px; border-radius: 8px; margin-top: 15px;">
-        <h3>Alterar Chave Pix Cadastrada</h3>
-        <input type="text" id="altCpf" placeholder="Confirme seu CPF" maxlength="14" oninput="mascaraCPF(this)">
+        <h3>Alterar Chave Pix</h3>
+        <input type="text" id="altCpf" placeholder="CPF do Colaborador" maxlength="14" oninput="mascaraCPF(this)">
         <select id="altTipoPix">
           <option value="CPF">Tipo de Chave: CPF</option>
           <option value="CELULAR">Tipo de Chave: Celular</option>
           <option value="EMAIL">Tipo de Chave: E-mail</option>
         </select>
         <input type="text" id="altPix" placeholder="Nova Chave Pix" oninput="aplicarMascaraPix(this)">
-        <button onclick="salvarEdicaoPix()">Sobrescrever Chave Antiga</button>
+        <button onclick="salvarEdicaoPix()">Atualizar Chave</button>
       </div>
     </div>
-  </div>
 
-  <div id="view-dashboard" class="hidden">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h2 id="gestorNome" style="margin: 0;">Painel de Controle</h2>
-      <button style="width: auto; padding: 8px 15px; background: #64748B;" onclick="location.reload()">Sair do Sistema</button>
-    </div>
-
-    <div id="navGestao" class="nav-tabs">
-      <button id="tabOperacao" class="active" onclick="mudarAbaDash('operacao')">Operação de Campo</button>
-      <button id="tabRelatorios" onclick="mudarAbaDash('relatorios')">Relatórios & Histórico</button>
-    </div>
-
-    <div id="abaOperacao">
+    <div id="abaGestao" class="hidden">
+      
       <div class="grid-2">
-        <div>
-          <h3>Projetos do Dia</h3>
-          <select id="comboProjetos" onchange="selecionarProjeto()"><option value="">Selecione uma operação ativa...</option></select>
-          <button class="btn-danger" id="btnEncerrar" onclick="encerrarProjeto()" style="display:none; margin-top:10px;">Encerrar Projeto Definitivamente</button>
-        </div>
-        <div id="blocoDespesas" class="hidden">
-          <h3>Lançamento de Despesa</h3>
-          <select id="tipoDespesa"></select>
-          <input type="text" id="valorDespesa" placeholder="Valor Lanzado (Ex: 125,50)">
-          <input type="text" id="obsDespesa" placeholder="Motivo / Observação">
-          <input type="file" id="arquivoDespesa" accept="image/*,.pdf">
-          <button onclick="salvarDespesa()">Registrar Despesa com Comprovante</button>
+        <div style="grid-column: span 2; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
+          <h3 style="margin: 0;">Supervisão de Campo <span style="font-size:12px; font-weight:normal; color:#64748B;">(Auto-atualização a cada 10s)</span></h3>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn-green" style="width:auto;" onclick="exportarRelatorioAtual()">Baixar Relatório (Atual)</button>
+            <button style="width:auto;" onclick="salvarTabelaEquipe()">Salvar Funções e Obs.</button>
+          </div>
         </div>
       </div>
-
-      <div id="blocoEquipe" class="hidden" style="margin-top: 30px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-          <h3 style="margin: 0;">Lista de Presença Realizada</h3>
-          <button style="width: 180px;" onclick="salvarTabelaEquipe()">Salvar Alterações</button>
-        </div>
+      
+      <div style="overflow-x: auto;">
         <table>
           <thead>
             <tr>
-              <th style="width: 60px;">Nº</th>
+              <th style="width: 50px;">Nº</th>
               <th>Colaborador</th>
-              <th style="width: 200px;">Função Alocada</th>
+              <th style="width: 180px;">Função Alocada</th>
               <th>Observação do Supervisor</th>
             </tr>
           </thead>
           <tbody id="tbodyEquipe"></tbody>
         </table>
       </div>
+
+      <div class="grid-2" style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;">
+        <div>
+          <h3>Lançamento de Despesa</h3>
+          <select id="tipoDespesa"></select>
+          <input type="text" id="valorDespesa" placeholder="Valor (Ex: 150,00)">
+          <input type="text" id="obsDespesa" placeholder="Motivo / Observação">
+          <div id="dropZoneDespesa" style="border: 2px dashed #CBD5E1; padding: 20px; text-align: center; cursor: pointer; border-radius: 6px; background: #F8FAFC; margin-bottom: 8px;">
+            <p style="margin: 0; color: #64748B;">Clique para anexar comprovante, ou <kbd>Ctrl+V</kbd> com o print copiado.</p>
+            <input type="file" id="arquivoDespesa" accept="image/*,.pdf" style="display:none;" onchange="previewImg(this.files[0])">
+          </div>
+          <img id="previewDespesa" style="max-width: 100%; max-height: 200px; display: none; margin-bottom: 8px; border-radius: 6px;">
+          
+          <button onclick="salvarDespesa()">Registrar Despesa</button>
+        </div>
+        <div>
+          <h3>Encerramento</h3>
+          <p style="font-size:13px; color:#64748B;">Ao final da operação, você pode encerrar este projeto para travá-lo e impedir novas batidas de ponto e gastos.</p>
+          <button class="btn-danger" onclick="encerrarProjeto()">Encerrar Projeto Definitivamente</button>
+        </div>
+      </div>
     </div>
 
     <div id="abaRelatorios" class="hidden">
       <h3>Histórico de Projetos Encerrados</h3>
-      <p style="font-size: 13px; color:#64748B; margin-top:-10px;">Selecione os projetos abaixo para exportar a consolidação em arquivo .csv</p>
+      <p style="font-size: 13px; color:#64748B; margin-top:-10px;">Selecione os projetos para exportar a planilha CSV (Data, Cliente, Unidade, CPF, Nome Completo, Chave Pix, Nome Reduzido, Função, Observação).</p>
       <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); background: #F8FAFC; padding: 15px; border-radius: 6px; margin-bottom: 12px;" id="listaEncerrados">
         </div>
-      <button class="btn-secondary" onclick="exportarCsvSelecionados()">Exportar Selecionados (.CSV)</button>
+      <button class="btn-secondary" onclick="exportarCsvSelecionados()">Exportar CSV dos Selecionados</button>
 
       <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);">
 
-      <h3>Consultar Participação de Colaborador</h3>
+      <h3>Consultar Participação Histórica</h3>
       <div class="grid-2">
         <input type="text" id="pesqTermo" placeholder="Pesquise por CPF ou parte do nome">
         <div style="display: flex; gap: 10px;">
@@ -141,17 +176,11 @@
           <input type="date" id="pesqDataFim" title="Data Final">
         </div>
       </div>
-      <button onclick="pesquisarHistoricoColab()">Executar Filtro de Pesquisa</button>
+      <button onclick="pesquisarHistoricoColab()">Buscar Histórico</button>
 
       <table style="margin-top: 20px;">
         <thead>
-          <tr>
-            <th>Data</th>
-            <th>Nome do Colaborador</th>
-            <th>Projeto / Unidade</th>
-            <th>Função Executada</th>
-            <th>Observações</th>
-          </tr>
+          <tr><th>Data</th><th>Nome do Colaborador</th><th>Projeto / Unidade</th><th>Função Executada</th><th>Obs</th></tr>
         </thead>
         <tbody id="tbodyPesquisa"></tbody>
       </table>
@@ -160,24 +189,76 @@
 </div>
 
 <script>
-  // CAPTURA A INJEÇÃO DINÂMICA DO GOOGLE APPS SCRIPT (?p=...)
-  const ID_PROJETO_PONTO = "https://script.google.com/macros/s/AKfycbwcGNE4-bjXF9aHzXUUdTjyvExGLCc_C4_Gap87CnbMhW83vyShsvCEG901q9zabfPy/exec"; 
+  const API_URL = "https://script.google.com/macros/s/AKfycbx2h4S0cX4tcRW6ibX6MGRkJwGisvHRXcn8eLxZYEN3euJFkzMWYF18KdVd7VsafiOV/exec"; 
   const LISTA_FUNCOES = ["OPERAÇÃO", "FRIOS", "AÉREOS", "PONTO-EXTRA", "SUPERVISÃO"];
   
-  let dadosGlobaisGestor = null;
-  let projetoSelecionado = null;
+  let gestorLogado = null;
+  let projetoAtivo = null;
   let timerRefresh = null;
+  let isTyping = false;
+  let base64Comprovante = null;
+  let mimeComprovante = null;
+  let nomeComprovante = null;
 
+  // Carregamento Inicial
   window.onload = () => {
-    // Se vier com o parâmetro de projeto pela URL, reconfigura a tela nativa para Batida de Ponto
-    if (ID_PROJETO_PONTO && ID_PROJETO_PONTO.trim() !== "") {
-      document.getElementById('auth-title').innerText = "Registro de Presença";
-      document.getElementById('auth-subtitle').innerText = "Informe seu CPF para registrar sua entrada em campo.";
-      document.getElementById('menuPontoExtras').classList.remove('hidden');
-      document.getElementById('btnAcessar').innerText = "Confirmar Presença";
-    }
+    callBackend({ action: 'getDadosIniciais' }, (res) => {
+      if(res.success) {
+        let sel = document.getElementById('loginProjeto');
+        sel.innerHTML = '<option value="ADMIN_ONLY">Acesso Administrativo (Sem Projeto)</option>';
+        res.projetos.forEach(p => {
+          let opt = document.createElement('option');
+          opt.value = JSON.stringify(p);
+          opt.text = `${p.data} - ${p.cliente} - ${p.unidade}`;
+          sel.appendChild(opt);
+        });
+        
+        let selDesp = document.getElementById('tipoDespesa');
+        res.configDespesas.forEach(d => {
+          selDesp.innerHTML += `<option value="${d}">${d}</option>`;
+        });
+      }
+    });
+
+    // Lógica do Drag and Drop / Paste para as Despesas
+    const dropZone = document.getElementById('dropZoneDespesa');
+    dropZone.addEventListener('click', () => document.getElementById('arquivoDespesa').click());
+    
+    document.addEventListener('paste', (e) => {
+      if(document.getElementById('abaGestao').classList.contains('hidden')) return; // só cola se estiver na aba gestão
+      
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (let index in items) {
+        const item = items[index];
+        if (item.kind === 'file') {
+          const blob = item.getAsFile();
+          previewImg(blob);
+          break;
+        }
+      }
+    });
   };
 
+  function previewImg(file) {
+      if(!file) return;
+      nomeComprovante = file.name || `Print_Despesa_${new Date().getTime()}.png`;
+      mimeComprovante = file.type;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          base64Comprovante = e.target.result.split(',')[1];
+          let img = document.getElementById('previewDespesa');
+          if(file.type.startsWith('image/')) {
+              img.src = e.target.result;
+              img.style.display = 'block';
+          } else {
+              img.style.display = 'none';
+          }
+      };
+      reader.readAsDataURL(file);
+  }
+
+  // Funções Utilitárias
   function mostrarMsg(texto, tipo) {
     const d = document.getElementById('msgGeral');
     d.className = `status-msg ${tipo}`; d.innerText = texto; d.classList.remove('hidden');
@@ -189,7 +270,6 @@
     el.classList.contains('hidden') ? el.classList.remove('hidden') : el.classList.add('hidden');
   }
 
-  // Máscaras de Input
   function mascaraCPF(i) {
     let v = i.value.replace(/\D/g, "");
     v = v.replace(/(\d{3})(\d)/, "$1.$2");
@@ -199,12 +279,10 @@
   }
 
   function aplicarMascaraPix(input) {
-    let selectId = input.id === 'cadPix' ? 'cadTipoPix' : 'altTipoPix';
-    let tipo = document.getElementById(selectId).value;
+    let tipo = document.getElementById(input.id === 'cadPix' ? 'cadTipoPix' : 'altTipoPix').value;
     let v = input.value;
-    if (tipo === 'CPF') {
-      mascaraCPF(input);
-    } else if (tipo === 'CELULAR') {
+    if (tipo === 'CPF') mascaraCPF(input);
+    else if (tipo === 'CELULAR') {
       v = v.replace(/\D/g, "");
       v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
       v = v.replace(/(\d)(\d{4})$/, "$1-$2");
@@ -215,131 +293,138 @@
   document.getElementById('cadTipoPix').addEventListener('change', () => document.getElementById('cadPix').value = "");
   document.getElementById('altTipoPix').addEventListener('change', () => document.getElementById('altPix').value = "");
 
-  // Comunicação Backend
   function callBackend(payload, callback) {
-    google.script.run.withSuccessHandler(res => {
-      let data = JSON.parse(res);
-      callback(data);
-    }).doPost({ postData: { contents: JSON.stringify(payload) } });
+    fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => callback(data))
+    .catch(err => mostrarMsg('Erro de rede: ' + err.message, 'error'));
   }
 
-  function processarAutenticacao() {
-    let cpf = document.getElementById('cpfAuth').value.replace(/\D/g, "");
-    if(cpf.length !== 11) return mostrarMsg('CPF informado é inválido.', 'error');
+  // ==========================================
+  // LOGIN E ACESSO
+  // ==========================================
+  function executarLogin() {
+    let projVal = document.getElementById('loginProjeto').value;
+    let cpf = document.getElementById('loginCpf').value.replace(/\D/g, "");
     
-    // CASO 1: Rota Batida de Ponto do Colaborador
-    if (ID_PROJETO_PONTO) {
-      let prjParts = ID_PROJETO_PONTO.split('|'); 
-      if(prjParts.length < 3) return mostrarMsg("Link parametrizado incorretamente.", 'error');
-      
-      let btn = document.getElementById('btnAcessar'); btn.disabled = true; btn.innerText = "Registrando...";
-      callBackend({
-        action: 'registrarPresenca', cpf: cpf,
-        projeto: { data: prjParts[0], cliente: prjParts[1], unidade: prjParts[2] }
-      }, (res) => {
-        btn.disabled = false; btn.innerText = "Confirmar Presença";
-        if(res.success) {
-          mostrarMsg(`Presença confirmada com sucesso para: ${res.nome}!`, 'success');
-          document.getElementById('cpfAuth').value = "";
-        } else {
-          mostrarMsg(res.error, 'error');
-        }
-      });
-      return;
-    }
+    if(!projVal) return mostrarMsg("Selecione um projeto ou a opção de Acesso Administrativo.", "error");
+    if(cpf.length !== 11) return mostrarMsg("CPF inválido.", "error");
     
-    // CASO 2: Rota de Acesso à Gestão (Supervisor / Diretor)
-    let btn = document.getElementById('btnAcessar'); btn.disabled = true; btn.innerText = "Verificando Credenciais...";
-    callBackend({ action: 'loginSupervisorPainel', cpf: cpf }, (res) => {
-      if (res.success) {
-        dadosGlobaisGestor = res;
-        document.getElementById('view-auth').classList.add('hidden');
-        document.getElementById('view-dashboard').classList.remove('hidden');
-        document.getElementById('gestorNome').innerText = `Gestão - ${res.nome} (${res.perfil})`;
-        
-        // Carrega relatórios de forma universal para perfis administrativos cadastrados
-        carregarProjetosEncerrados();
+    let projObj = projVal === "ADMIN_ONLY" ? null : JSON.parse(projVal);
+    let btn = document.getElementById('btnAcessar'); 
+    btn.disabled = true; btn.innerText = "Validando Acesso...";
 
-        let selectPrj = document.getElementById('comboProjetos');
-        res.projetos.forEach(p => {
-          let opt = document.createElement('option');
-          opt.value = JSON.stringify(p);
-          opt.text = `${p.cliente} - ${p.unidade} (${p.data})`;
-          selectPrj.appendChild(opt);
-        });
+    callBackend({ action: 'loginGestor', cpf: cpf, projeto: projObj }, (res) => {
+      btn.disabled = false; btn.innerText = "Iniciar Operação";
+      if(res.success) {
+        gestorLogado = res.gestor;
+        projetoAtivo = projObj;
         
-        let selectDesp = document.getElementById('tipoDespesa');
-        res.configDespesas.forEach(d => {
-          let opt = document.createElement('option'); opt.value = d; opt.text = d;
-          selectDesp.appendChild(opt);
-        });
+        document.getElementById('view-login').classList.add('hidden');
+        document.getElementById('view-dashboard').classList.remove('hidden');
+        document.getElementById('lblGestor').innerText = `${res.gestor.nome} (${res.gestor.perfil})`;
+        
+        if(projetoAtivo) {
+          document.getElementById('lblProjeto').innerText = `${projetoAtivo.data} - ${projetoAtivo.cliente} - ${projetoAtivo.unidade}`;
+          mostrarMsg(`Bem-vindo, ${res.gestor.nome}. Sua presença foi registrada no projeto!`, "success");
+        } else {
+          document.getElementById('lblProjeto').innerText = "Modo de Leitura (Nenhum Projeto Aberto)";
+          document.getElementById('tabPonto').classList.add('hidden');
+          document.getElementById('tabGestao').classList.add('hidden');
+          mudarAba('relatorios');
+        }
+
+        carregarProjetosEncerrados();
       } else {
-        btn.disabled = false; btn.innerText = "Acessar Painel";
         mostrarMsg(res.error, 'error');
       }
     });
   }
 
-  // ====================================================================
-  // CONTROLE DA OPERAÇÃO DE CAMPO & REFRESH INTELIGENTE
-  // ====================================================================
-  function selecionarProjeto() {
-    let val = document.getElementById('comboProjetos').value;
-    if (!val) {
-      document.getElementById('blocoDespesas').classList.add('hidden');
-      document.getElementById('blocoEquipe').classList.add('hidden');
-      document.getElementById('btnEncerrar').style.display = 'none';
-      clearInterval(timerRefresh);
-      return;
-    }
-    
-    projetoSelecionado = JSON.parse(val);
-    document.getElementById('blocoDespesas').classList.remove('hidden');
-    document.getElementById('blocoEquipe').classList.remove('hidden');
-    document.getElementById('btnEncerrar').style.display = 'block';
-    
-    document.getElementById('tbodyEquipe').innerHTML = ""; 
-    carregarEquipe();
-    clearInterval(timerRefresh);
-    timerRefresh = setInterval(carregarEquipe, 10000); // REFRESH OBRIGATÓRIO DE 10 SEGUNDOS
-  }
+  // ==========================================
+  // ABA: BATER PONTO (TOTEM)
+  // ==========================================
+  function baterPontoEquipe() {
+    let cpf = document.getElementById('pontoCpf').value.replace(/\D/g, "");
+    if(cpf.length !== 11) return mostrarMsg('CPF inválido.', 'error');
+    if(!projetoAtivo) return mostrarMsg('Nenhum projeto ativo.', 'error');
 
-  function carregarEquipe() {
-    if(!projetoSelecionado) return;
-    callBackend({ action: 'getListaPresencas', projeto: projetoSelecionado }, (res) => {
-      if(res.success) renderizarTabelaSemApagarInputs(res.lista);
+    let btn = document.getElementById('btnBaterPonto');
+    btn.disabled = true; btn.innerText = "Registrando...";
+
+    callBackend({ action: 'registrarPresenca', cpf: cpf, projeto: projetoAtivo }, (res) => {
+      btn.disabled = false; btn.innerText = "Confirmar Presença";
+      if(res.success) {
+        mostrarMsg(`Ponto de ${res.nome} registrado!`, 'success');
+        document.getElementById('pontoCpf').value = "";
+      } else {
+        mostrarMsg(res.error, 'error');
+      }
     });
   }
 
-  // MOTOR CRÍTICO: Atualiza e insere novos registros mantendo os inputs intactos
-  function renderizarTabelaSemApagarInputs(lista) {
-    let tbody = document.getElementById('tbodyEquipe');
+  // ==========================================
+  // NAVEGAÇÃO DE ABAS
+  // ==========================================
+  function mudarAba(aba) {
+    ['Ponto', 'Gestao', 'Relatorios'].forEach(a => {
+      document.getElementById('tab' + a).classList.remove('active');
+      document.getElementById('aba' + a).classList.add('hidden');
+    });
+
+    if(aba === 'ponto') {
+      document.getElementById('tabPonto').classList.add('active');
+      document.getElementById('abaPonto').classList.remove('hidden');
+      clearInterval(timerRefresh);
+    } else if(aba === 'gestao') {
+      document.getElementById('tabGestao').classList.add('active');
+      document.getElementById('abaGestao').classList.remove('hidden');
+      carregarEquipe(); // Carga imediata
+      clearInterval(timerRefresh);
+      timerRefresh = setInterval(carregarEquipe, 10000); // REFRESH 10 SEGUNDOS
+    } else {
+      document.getElementById('tabRelatorios').classList.add('active');
+      document.getElementById('abaRelatorios').classList.remove('hidden');
+      clearInterval(timerRefresh);
+    }
+  }
+
+  // ==========================================
+  // GESTÃO DE EQUIPE (TABELA 10s)
+  // ==========================================
+  function carregarEquipe() {
+    if(!projetoAtivo) return;
+    if(isTyping) return; // Blinda para não apagar o que o supervisor tá digitando se der refresh!
     
+    callBackend({ action: 'getListaPresencas', projeto: projetoAtivo }, (res) => {
+      if(res.success && !isTyping) renderTabelaEquipe(res.lista);
+    });
+  }
+
+  function renderTabelaEquipe(lista) {
+    let tbody = document.getElementById('tbodyEquipe');
+    let innerBuffer = "";
+
     lista.forEach((item, index) => {
-      let trExistente = document.getElementById(`row-${item.rowId}`);
-      if (!trExistente) {
-        let tr = document.createElement('tr');
-        tr.id = `row-${item.rowId}`;
-        
-        let selectHtml = `<select id="funcao-${item.rowId}">`;
+        let selectHtml = `<select id="funcao-${item.rowId}" onfocus="isTyping=true" onblur="isTyping=false">`;
         LISTA_FUNCOES.forEach(f => {
           let sel = (f === item.funcao) ? 'selected' : '';
           selectHtml += `<option value="${f}" ${sel}>${f}</option>`;
         });
         selectHtml += `</select>`;
         
-        tr.innerHTML = `
+        innerBuffer += `
+        <tr id="row-${item.rowId}">
           <td><strong>${index + 1}</strong></td>
           <td>${item.nome}<br><small style="color:#64748B">${item.cpf}</small></td>
           <td>${selectHtml}</td>
-          <td><input type="text" id="obs-${item.rowId}" value="${item.obs || ''}" placeholder="Inserir observação..."></td>
-        `;
-        tbody.appendChild(tr);
-      } else {
-        // Atualiza apenas o contador sequencial, blindando o estado atual dos inputs de digitação
-        trExistente.children[0].innerHTML = `<strong>${index + 1}</strong>`;
-      }
+          <td><input type="text" id="obs-${item.rowId}" value="${item.obs || ''}" placeholder="Inserir observação..." onfocus="isTyping=true" onblur="isTyping=false"></td>
+        </tr>`;
     });
+    tbody.innerHTML = innerBuffer;
   }
 
   function salvarTabelaEquipe() {
@@ -353,131 +438,68 @@
         obs: document.getElementById(`obs-${id}`).value
       });
     }
-    
-    callBackend({ action: 'salvarApenas', lista: lista }, (res) => {
-      res.success ? mostrarMsg('Alterações da equipe salvas com sucesso!', 'success') : mostrarMsg('Erro na gravação.', 'error');
+    callBackend({ action: 'salvarGestao', lista: lista }, (res) => {
+      res.success ? mostrarMsg('Funções e observações salvas!', 'success') : mostrarMsg('Erro ao salvar.', 'error');
     });
   }
 
+  function exportarRelatorioAtual() {
+    if(!projetoAtivo) return;
+    gerarDownloadCsv([projetoAtivo]);
+  }
+
   function encerrarProjeto() {
-    if(confirm('Atenção: Confirmar o encerramento da operação de hoje impossibilitará novas batidas de ponto. Deseja prosseguir?')) {
-      callBackend({ action: 'encerrarProjeto', project: projetoSelecionado }, (res) => {
+    if(confirm('Atenção: Ao encerrar, o projeto não aparecerá mais como ativo.')) {
+      callBackend({ action: 'encerrarProjeto', projeto: projetoAtivo }, (res) => {
         if(res.success) {
-          mostrarMsg('Operação finalizada e salva com sucesso!', 'success');
+          mostrarMsg('Projeto finalizado!', 'success');
           setTimeout(() => location.reload(), 1500);
         }
       });
     }
   }
 
+  // DESPESAS COM BASE64
   function salvarDespesa() {
     let val = document.getElementById('valorDespesa').value;
-    if(!val) return mostrarMsg('Insira o valor do lançamento.', 'error');
+    if(!val) return mostrarMsg('Insira o valor da despesa.', 'error');
     
-    let inputArq = document.getElementById('arquivoDespesa');
     let payload = {
-      action: 'salvarDespesaPainel', dadosGestor: dadosGlobaisGestor, projeto: projetoSelecionado,
+      action: 'salvarDespesa', gestorNome: gestorLogado.nome, projeto: projetoAtivo,
       tipo: document.getElementById('tipoDespesa').value, valor: val, obs: document.getElementById('obsDespesa').value
     };
 
-    if(inputArq.files.length > 0) {
-      let file = inputArq.files[0];
-      let reader = new FileReader();
-      reader.onload = function(e) {
-        payload.comprovante = { base64: e.target.result.split(',')[1], nome: file.name, mime: file.type };
-        enviarDespesaProServidor(payload);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      enviarDespesaProServidor(payload);
+    if(base64Comprovante) {
+        payload.comprovante = {
+            base64: base64Comprovante,
+            nome: nomeComprovante,
+            mime: mimeComprovante
+        }
     }
+
+    mostrarMsg('Salvando despesa...', 'success');
+    callBackend(payload, cbDespesa);
   }
 
-  function enviarDespesaProServidor(payload) {
-    mostrarMsg('Fazendo upload do comprovante...', 'success');
-    callBackend(payload, (res) => {
-      if(res.success) {
-        mostrarMsg('Lançamento de despesa armazenado com sucesso!', 'success');
-        document.getElementById('valorDespesa').value = "";
-        document.getElementById('obsDespesa').value = "";
-        document.getElementById('arquivoDespesa').value = "";
-      } else {
-        mostrarMsg(res.error, 'error');
-      }
-    });
+  function cbDespesa(res) {
+    if(res.success) {
+      mostrarMsg('Despesa lançada!', 'success');
+      document.getElementById('valorDespesa').value = ""; 
+      document.getElementById('obsDespesa').value = "";
+      base64Comprovante = null;
+      document.getElementById('previewDespesa').style.display = 'none';
+      document.getElementById('arquivoDespesa').value = '';
+    } else mostrarMsg(res.error, 'error');
   }
 
-  // ====================================================================
-  // MODULOS DE CADASTRO E PIX (COLABORADOR)
-  // ====================================================================
-  function salvarNovoColaborador() {
-    let c = document.getElementById('cadCpf').value;
-    let n = document.getElementById('cadNome').value;
-    let p = document.getElementById('cadPix').value;
-    if(!c || !n || !p) return mostrarMsg('Todos os campos cadastrais são obrigatórios.', 'error');
-    
-    callBackend({action: 'cadastrarColaborador', dados: {cpf: c, nome: n, pix: p}}, (res) => {
-      if(res.success) {
-        mostrarMsg('Colaborador cadastrado com sucesso!', 'success');
-        document.getElementById('formCadastroColab').classList.add('hidden');
-        document.getElementById('cadCpf').value = "";
-        document.getElementById('cadNome').value = "";
-        document.getElementById('cadPix').value = "";
-      } else {
-        mostrarMsg(res.error, 'error');
-      }
-    });
-  }
-
-  function salvarEdicaoPix() {
-    let c = document.getElementById('altCpf').value;
-    let p = document.getElementById('altPix').value;
-    if(!c || !p) return mostrarMsg('Preencha o CPF e a Nova Chave informada.', 'error');
-    
-    callBackend({action: 'alterarPix', cpf: c, novaChave: p}, (res) => {
-      if(res.success) {
-        mostrarMsg('Chave Pix atualizada e sobrescrita na base!', 'success');
-        document.getElementById('formAlterarPix').classList.add('hidden');
-        document.getElementById('altCpf').value = "";
-        document.getElementById('altPix').value = "";
-      } else {
-        mostrarMsg(res.error, 'error');
-      }
-    });
-  }
-
-  // ====================================================================
-  // MÓDULO: RELATÓRIOS, HISTÓRICOS E CSV (SUPERVISOR / DIRETOR)
-  // ====================================================================
-  function mudarAbaDash(aba) {
-    document.getElementById('tabOperacao').classList.remove('active');
-    document.getElementById('tabRelatorios').classList.remove('active');
-    document.getElementById('abaOperacao').classList.add('hidden');
-    document.getElementById('abaRelatorios').classList.add('hidden');
-
-    if(aba === 'operacao') {
-      document.getElementById('tabOperacao').classList.add('active');
-      document.getElementById('abaOperacao').classList.remove('hidden');
-      if(projetoSelecionado) {
-        clearInterval(timerRefresh);
-        timerRefresh = setInterval(carregarEquipe, 10000);
-      }
-    } else {
-      document.getElementById('tabRelatorios').classList.add('active');
-      document.getElementById('abaRelatorios').classList.remove('hidden');
-      clearInterval(timerRefresh); // Paralisa o timer de background ao sair da tela operacional
-    }
-  }
-
+  // ==========================================
+  // RELATÓRIOS E PESQUISA HISTÓRICA
+  // ==========================================
   function carregarProjetosEncerrados() {
     callBackend({action: 'getProjetosEncerrados'}, (res) => {
       if(res.success) {
         let container = document.getElementById('listaEncerrados');
         container.innerHTML = "";
-        if(res.lista.length === 0) {
-          container.innerHTML = "<p style='font-size:13px; color:#64748B;'>Nenhum projeto encerrado disponível.</p>";
-          return;
-        }
         res.lista.forEach(p => {
           container.innerHTML += `
             <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;">
@@ -492,22 +514,22 @@
 
   function exportarCsvSelecionados() {
     let checks = document.querySelectorAll('.chk-encerrado:checked');
-    if(checks.length === 0) return mostrarMsg('Selecione pelo menos uma operação arquivada.', 'error');
-    
+    if(checks.length === 0) return mostrarMsg('Selecione pelo menos um projeto.', 'error');
     let projs = Array.from(checks).map(c => JSON.parse(c.getAttribute('data-json')));
+    gerarDownloadCsv(projs);
+  }
+
+  function gerarDownloadCsv(arrayProjetos) {
     mostrarMsg('Gerando dados de exportação...', 'success');
-    
-    callBackend({action: 'exportarProjetosCsv', projetos: projs}, (res) => {
+    callBackend({action: 'exportarProjetosCsv', projetos: arrayProjetos}, (res) => {
       if(res.success) {
         let blob = new Blob([res.csvData], { type: 'text/csv;charset=utf-8;' });
         let url = URL.createObjectURL(blob);
         let a = document.createElement("a");
         a.href = url;
-        a.download = `Relatorio_Exportacao_Projetos_${new Date().getTime()}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        mostrarMsg('Download da planilha .csv concluído!', 'success');
+        a.download = `Folha_de_Pagamento_${new Date().getTime()}.csv`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        mostrarMsg('Download da planilha concluído!', 'success');
       }
     });
   }
@@ -517,26 +539,41 @@
     let d1 = document.getElementById('pesqDataIni').value;
     let d2 = document.getElementById('pesqDataFim').value;
     
-    document.getElementById('tbodyPesquisa').innerHTML = "<tr><td colspan='5'>Filtrando base histórica...</td></tr>";
-    
+    document.getElementById('tbodyPesquisa').innerHTML = "<tr><td colspan='5'>Filtrando...</td></tr>";
     callBackend({action: 'pesquisarColaborador', termo: t, dataIni: d1, dataFim: d2}, (res) => {
       if(res.success) {
         let tb = document.getElementById('tbodyPesquisa');
         tb.innerHTML = "";
-        if(res.lista.length === 0) {
-          tb.innerHTML = "<tr><td colspan='5'>Nenhum registro de participação localizado com os filtros aplicados.</td></tr>";
-          return;
-        }
+        if(res.lista.length === 0) return tb.innerHTML = "<tr><td colspan='5'>Nenhum registro.</td></tr>";
         res.lista.forEach(i => {
           tb.innerHTML += `<tr>
-            <td>${i.data}</td>
-            <td><strong>${i.nome}</strong></td>
-            <td>${i.cliente} (${i.unidade})</td>
-            <td><span style="background:#E2E8F0; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:600;">${i.funcao}</span></td>
+            <td>${i.data}</td><td><strong>${i.nome}</strong></td><td>${i.cliente} (${i.unidade})</td>
+            <td><span style="background:#E2E8F0; padding:3px 8px; border-radius:4px; font-size:12px;">${i.funcao}</span></td>
             <td>${i.obs || '-'}</td>
           </tr>`;
         });
       }
+    });
+  }
+
+  // ==========================================
+  // CADASTRO / PIX (FORMULÁRIOS)
+  // ==========================================
+  function salvarNovoColaborador() {
+    let c = document.getElementById('cadCpf').value, n = document.getElementById('cadNome').value, p = document.getElementById('cadPix').value;
+    if(!c || !n || !p) return mostrarMsg('Preencha tudo.', 'error');
+    callBackend({action: 'cadastrarColaborador', dados: {cpf: c, nome: n, pix: p}}, (res) => {
+      if(res.success) { mostrarMsg('Cadastrado!', 'success'); document.getElementById('formCadastroColab').classList.add('hidden'); } 
+      else mostrarMsg(res.error, 'error');
+    });
+  }
+
+  function salvarEdicaoPix() {
+    let c = document.getElementById('altCpf').value, p = document.getElementById('altPix').value;
+    if(!c || !p) return mostrarMsg('Preencha CPF e Nova Chave.', 'error');
+    callBackend({action: 'alterarPix', cpf: c, novaChave: p}, (res) => {
+      if(res.success) { mostrarMsg('Pix atualizado!', 'success'); document.getElementById('formAlterarPix').classList.add('hidden'); }
+      else mostrarMsg(res.error, 'error');
     });
   }
 </script>
