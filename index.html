@@ -1,242 +1,610 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Gestão de Despesas Operacionais</title>
-  <style>
-    :root { --primary: #0f172a; --accent: #2563eb; --success: #16a34a; --background: #f1f5f9; --surface: #ffffff; }
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-    body { background-color: var(--background); padding: 20px; color: #333; }
-    
-    .container { max-width: 800px; margin: 0 auto; }
-    .card { background: var(--surface); border: 1px solid #cbd5e1; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    
-    h2 { margin-bottom: 20px; color: var(--primary); border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
-    .hidden { display: none !important; }
-    
-    .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; color: var(--primary); }
-    input, select { width: 100%; padding: 12px; border: 1px solid #94a3b8; border-radius: 6px; font-size: 1rem; }
-    input:focus, select:focus { outline: none; border-color: var(--accent); }
-    
-    .btn { background: var(--accent); color: white; border: none; padding: 14px; width: 100%; font-size: 1rem; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s; }
-    .btn-success { background: var(--success); }
-    .btn:hover { opacity: 0.9; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Painel de Gestão - Formula Code</title>
+    <style>
+        .hidden { display: none !important; }
 
-    /* Navegação */
-    .nav-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 25px; }
-    .nav-btn { background: #e2e8f0; color: var(--primary); border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: 600; text-align: center; transition: 0.2s; }
-    .nav-btn:hover { background: #cbd5e1; }
-    .nav-btn.active { background: var(--accent); color: white; }
+        /* ================= IDENTIDADE VISUAL FORMULA CODE ================= */
+        :root {
+            --fc-primaria: #5F65F4;
+            --fc-fundo: #f8f9fa;
+            --fc-sucesso: #198754;
+        }
 
-    /* Upload e Imagens */
-    .drop-zone { border: 2px dashed #94a3b8; padding: 30px 20px; text-align: center; cursor: pointer; border-radius: 8px; background: #f8fafc; transition: background 0.2s; }
-    .drop-zone:hover { background: #f1f5f9; }
-    #previewImg { max-width: 100%; max-height: 250px; margin-top: 15px; display: none; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
-    
-    #loading { text-align: center; font-weight: bold; color: var(--accent); margin-bottom: 20px; font-size: 1.1rem; }
-  </style>
+        body {
+            background-color: var(--fc-fundo) !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .text-primary { color: var(--fc-primaria) !important; }
+        .bg-primary { background-color: var(--fc-primaria) !important; }
+        .btn-primary {
+            background-color: var(--fc-primaria) !important;
+            border-color: var(--fc-primaria) !important;
+            color: #ffffff !important;
+        }
+        .btn-primary:hover { filter: brightness(0.9); }
+
+        .fc-container {
+            max-width: 900px; 
+            background: #ffffff; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
+            border: 1px solid #eaeaea;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-tabs .nav-link { color: #6c757d; font-weight: bold; border: none; }
+        .nav-tabs .nav-link.active { color: var(--fc-primaria); border-bottom: 3px solid var(--fc-primaria); background: none; }
+
+        /* Área de Upload/Paste do Comprovante */
+        .upload-zone {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--fc-primaria);
+            background: #f1f2ff;
+        }
+        .preview-img {
+            max-width: 100%;
+            max-height: 150px;
+            border-radius: 6px;
+            margin-top: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        /* customização de tabelas */
+        .table th { background-color: #f1f2f6 !important; color: #4b5563; font-weight: 600; }
+    </style>
 </head>
-<body>
+<body class="p-3">
 
-  <div class="container">
-    <div id="loading" class="hidden">🔄 Processando...</div>
-
-    <div id="telaLogin" class="card">
-      <h2 style="text-align: center; border: none;">Acesso Corporativo</h2>
-      <form id="formLogin">
-        <div class="form-group">
-          <label>CPF do Colaborador (Apenas números):</label>
-          <input type="text" id="cpfInput" required placeholder="Ex: 00000000000">
-        </div>
-        <button type="button" class="btn" onclick="executarLogin()">Validar Acesso</button>
-      </form>
-    </div>
-
-    <div id="appPrincipal" class="hidden">
-      <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 25px;">
-        <h3 id="boasVindas" style="margin: 0; color: var(--primary);">Bem-vindo</h3>
-        <span id="badgeAcesso" style="background: var(--primary); color: white; padding: 6px 12px; border-radius: 4px; font-size: 0.85rem; font-weight: bold;">Nível</span>
-      </div>
-
-      <div class="nav-grid" id="menuNavegacao">
-        <button class="nav-btn active" onclick="mostrarTela('ponto', this)">Folha de Ponto</button>
-        <button class="nav-btn" onclick="mostrarTela('despesa', this)">Lançar Despesa</button>
-        <button class="nav-btn hidden gestor-only" onclick="mostrarTela('gestao', this)">Painel de Gestão</button>
-        <button class="nav-btn hidden gestor-only" onclick="mostrarTela('bi', this)">Visões de BI</button>
-      </div>
-
-      <div id="tela-ponto" class="card modulo-tela">
-        <h2>Registro de Ponto</h2>
-        <form id="formPonto">
-          <div class="form-group">
-            <label>Centro de Custo / Projeto:</label>
-            <input type="text" id="pontoProjeto" required placeholder="Nome do cliente ou unidade">
-          </div>
-          <div class="form-group">
-            <label>Tipo de Batida:</label>
-            <select id="pontoTipo">
-              <option value="Entrada">Entrada (Início de Turno)</option>
-              <option value="Saída">Saída (Fim de Turno)</option>
-            </select>
-          </div>
-          <button type="button" class="btn btn-success" onclick="salvarPonto()">Registrar Horário</button>
-        </form>
-      </div>
-
-      <div id="tela-despesa" class="card modulo-tela hidden">
-        <h2>Lançamento de Despesa</h2>
-        <form id="formDespesa">
-          <div class="form-group">
-            <label>Projeto / Unidade Vinculada:</label>
-            <input type="text" id="despProjeto" required placeholder="Nome do cliente ou unidade">
-          </div>
-          <div class="form-group">
-            <label>Valor Total (R$):</label>
-            <input type="number" id="despValor" step="0.01" required placeholder="0.00">
-          </div>
-          <div class="form-group">
-            <label>Comprovante da despesa (Tire um Print e use <b>Ctrl+V</b>):</label>
-            <div class="drop-zone" onclick="document.getElementById('despArquivo').click()">
-              📸 <b>Cole o print (Ctrl+V)</b> em qualquer lugar desta tela<br>ou clique aqui para buscar um arquivo.
-              <input type="file" id="despArquivo" class="hidden" accept="image/*" onchange="processarImagem(this.files[0])">
-            </div>
-            <img id="previewImg">
-          </div>
-          <button type="button" class="btn btn-success" onclick="salvarDespesa()">Enviar Comprovante</button>
-        </form>
-      </div>
-
-      <div id="tela-gestao" class="card modulo-tela hidden">
-        <h2>Gestão de Equipes e Operações</h2>
-        <p>Módulo de controle estratégico. Relatórios consolidados de projetos e inventários aparecerão aqui.</p>
-      </div>
-      <div id="tela-bi" class="card modulo-tela hidden">
-        <h2>Inteligência de Negócios (BI)</h2>
-        <p>Módulo analítico. Gráficos de performance e custos da operação.</p>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    // =========================================================================
-    // 1. COLOQUE AQUI A URL DO GOOGLE APPS SCRIPT (O LINK QUE TERMINA EM /exec)
-    // =========================================================================
-    const URL_DO_WEB_APP = "https://script.google.com/macros/s/AKfycbwfmFVvQed4q-EvVHXIV-MDPiMZjbBilSRJmvQbsKJNY622Y7S_9amo-G8L0VjuCQ3M/exec"; 
+<div class="container fc-container mx-auto">
     
-    let usuarioLogado = {};
-    let arquivoBase64Global = "";
-
-    function showLoading() { document.getElementById('loading').classList.remove('hidden'); }
-    function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
-
-    function mostrarTela(idTela, botao) {
-      document.querySelectorAll('.modulo-tela').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
-      document.getElementById('tela-' + idTela).classList.remove('hidden');
-      if (botao) botao.classList.add('active');
-    }
-
-    // Comunicação assíncrona robusta com o Google Script
-    async function enviarParaBackend(payload) {
-      showLoading();
-      try {
-        const response = await fetch(URL_DO_WEB_APP, {
-          method: 'POST',
-          body: JSON.stringify(payload) 
-        });
-        const data = await response.json();
-        hideLoading();
-        return data;
-      } catch (error) {
-        hideLoading();
-        alert("Erro de comunicação com o servidor. Verifique a URL do Web App.");
-        console.error(error);
-        return { success: false };
-      }
-    }
-
-    async function executarLogin() {
-      const cpf = document.getElementById('cpfInput').value.trim();
-      if (!cpf) return alert("Digite o CPF.");
-
-      const resposta = await enviarParaBackend({ action: "login", cpf: cpf });
-      
-      if (resposta.success) {
-        usuarioLogado = resposta.dados;
-        document.getElementById('telaLogin').classList.add('hidden');
-        document.getElementById('appPrincipal').classList.remove('hidden');
+    <div id="view-login">
+        <div class="text-center mb-4">
+            <h2 class="text-primary fw-bold">Formula Code</h2>
+            <p class="text-muted">Painel de Controle de Operações e Despesas</p>
+        </div>
         
-        document.getElementById('boasVindas').innerText = "Olá, " + usuarioLogado.nome;
-        document.getElementById('badgeAcesso').innerText = usuarioLogado.nivel.toUpperCase();
+        <div class="card p-4 mx-auto shadow-sm" style="max-width: 450px;">
+            <label class="form-label fw-bold mb-2">Identificação do Gestor (CPF):</label>
+            <input type="text" id="cpf-login" class="form-control form-control-lg mb-3 text-center cpf-mask" placeholder="000.000.000-00" maxlength="14">
+            <button id="btn-entrar" class="btn btn-primary w-100 py-2 fw-bold" onclick="loginPainel()">Acessar Painel</button>
+        </div>
+    </div>
 
-        if (usuarioLogado.nivel === "diretoria") {
-          document.querySelectorAll('.gestor-only').forEach(el => el.classList.remove('hidden'));
-        }
-      } else {
-        alert(resposta.mensagem || "Credenciais não localizadas.");
-      }
+    <div id="view-painel" class="hidden">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+            <div>
+                <h4 class="text-primary fw-bold mb-0">Painel Administrativo</h4>
+                <small class="text-muted">Gestor: <span id="txt-nome-gestor" class="fw-bold text-dark">...</span> | Perfil: <span id="txt-perfil-gestor" class="badge bg-secondary">...</span></small>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" onclick="logoutPainel()">Sair do Sistema</button>
+        </div>
+
+        <ul class="nav nav-tabs mb-4" id="painelTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="projetos-tab" data-bs-toggle="tab" data-bs-target="#tab-projetos" type="button" role="tab">📋 Controle de Presença</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="despesas-tab" data-bs-toggle="tab" data-bs-target="#tab-despesas" type="button" role="tab">💸 Lançamento de Despesas</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="conteudoPainelTabs">
+            
+            <div class="tab-pane fade show active" id="tab-projetos" role="tabpanel">
+                <div class="row g-3 align-items-end mb-4">
+                    <div class="col-md-8">
+                        <label class="form-label fw-bold text-secondary">Selecione o Projeto Ativo (Data de Hoje):</label>
+                        <select id="sel-projeto-ativo" class="form-select" onchange="selecionarProjetoAtivo(this.value)">
+                            <option value="">-- Carregando projetos ativos --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="area-detalhes-projeto" class="hidden">
+                    <div class="card bg-light p-3 mb-4 border-0 shadow-sm">
+                        <div class="row">
+                            <div class="col-6 col-md-3"><strong>Cliente:</strong> <span id="info-cliente"></span></div>
+                            <div class="col-6 col-md-3"><strong>Unidade:</strong> <span id="info-unidade"></span></div>
+                            <div class="col-6 col-md-3"><strong>Data:</strong> <span id="info-data"></span></div>
+                            <div class="col-6 col-md-3"><strong>Status:</strong> <span id="info-status" class="badge bg-success"></span></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 border rounded">
+                        <label class="form-label fw-bold text-primary">Link de Presença para os Colaboradores:</label>
+                        <div class="input-group">
+                            <input type="text" id="link-ponto" class="form-control bg-white" readonly>
+                            <button class="btn btn-outline-primary fw-bold" type="button" onclick="copiarLink()">📋 Copiar Link</button>
+                        </div>
+                        <small class="text-muted d-block mt-1">Envie este link para que a equipe registre a presença diretamente do celular localmente.</small>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="fw-bold mb-0">Colaboradores Presentes (<span id="contador-participantes">0</span>)</h5>
+                        <small class="text-muted">Atualização automática em tempo real</small>
+                    </div>
+
+                    <div class="table-responsive border rounded mb-3">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nome do Colaborador</th>
+                                    <th style="width: 200px;">Função Designada</th>
+                                    <th>Observações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="lista-presentes-sup">
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3">Nenhum registro encontrado ainda neste projeto.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <button id="btn-salvar-apenas" class="btn btn-primary fw-bold" onclick="salvarAlteracoes()">💾 Salvar Alterações</button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-outline-success fw-bold" onclick="exportarExcel()">📊 Exportar Excel</button>
+                            <button id="btn-encerrar" class="btn btn-danger fw-bold" onclick="encerrarProjeto()">🔒 Encerrar Projeto</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-despesas" role="tabpanel">
+                <div class="card p-4 border-0 bg-light shadow-sm">
+                    <h5 class="fw-bold text-primary mb-3">Registrar Nova Despesa Operacional</h5>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Projeto Vinculado:</label>
+                            <select id="sel-despesa-projeto" class="form-select">
+                                <option value="">-- Selecione o Projeto --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Tipo de Despesa:</label>
+                            <select id="sel-despesa-tipo" class="form-select">
+                                <option value="">-- Selecione o Tipo (Aba Config_Despesas) --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Valor do Lançamento:</label>
+                            <input type="text" id="valor-despesa" class="form-control money-mask text-end fw-bold fs-5" placeholder="R$ 0,00">
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Observações Pertinentes:</label>
+                            <input type="text" id="obs-despesa" class="form-control" placeholder="Ex: Combustível van de transporte de equipe / Almoço técnico">
+                        </div>
+
+                        <div class="col-12 mt-4">
+                            <label class="form-label fw-bold">Comprovante Digitalizado (Foto, Anexo ou Print da Tela):</label>
+                            <input type="file" id="file-comprovante" class="hidden" accept="image/*,application/pdf" onchange="manipularSelecaoArquivo(this)">
+                            
+                            <div id="drop-zone-comprovante" class="upload-zone" onclick="document.getElementById('file-comprovante').click()">
+                                <span class="fs-4 d-block">📸 📁 📋</span>
+                                <span class="fw-bold text-secondary">Clique para anexar, arraste o arquivo aqui ou dê <kbd>Ctrl + V</kbd> para colar o print.</span>
+                                <div id="preview-container" class="hidden">
+                                    <img id="img-preview" src="" class="preview-img" alt="Preview">
+                                    <div id="file-name-preview" class="text-success small fw-bold mt-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 mt-4">
+                        <button id="btn-nova-despesa" class="btn btn-outline-primary w-50 py-2 fw-bold" onclick="salvarMóduloDespesa('nova')">➕ Nova Despesa</button>
+                        <button id="btn-finalizar-despesa" class="btn btn-success w-50 py-2 fw-bold" onclick="salvarMóduloDespesa('finalizar')">✓ Finalizar e Concluir</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // =========================================================================
+    // DECLARAÇÃO DO ENDPOINT DO GOOGLE APPS SCRIPT
+    // =========================================================================
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxK8Lrw6S9RK1ORGi7Bam2g5r-e7X8ZY1W5YvaxPr_wL0rVyNWE2OIBjPTTGLzpgoQu/exec'; 
+    
+    // Variáveis Globais de Controle de Estado
+    let dadosUsuario = null; 
+    let projetosCache = []; 
+    let projetoAtivo = null; 
+    let dadosGlobaisParaExcel = []; 
+    let isTyping = false; 
+    let loopSincronismo = null; 
+    let comprovanteB64 = null; 
+    let comprovanteMime = null;
+    let comprovanteNome = null;
+
+    // ================= SISTEMA DE MÁSCARAS AUTOMÁTICAS =================
+    function aplicarMascaraCPF(input) {
+        let v = input.value.replace(/\D/g, "");
+        if (v.length > 11) v = v.slice(0, 11);
+        if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{1,2})$/, "$1.$2.$3-$4");
+        else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{1,3})$/, "$1.$2.$3");
+        else if (v.length > 3) v = v.replace(/^(\d{3})(\d{1,3})$/, "$1.$2");
+        input.value = v;
     }
 
-    // Processamento de imagens (Ctrl+V)
-    window.addEventListener('paste', e => {
-      if (document.getElementById('tela-despesa').classList.contains('hidden')) return;
-      const items = e.clipboardData.items;
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf("image") !== -1) {
-          processarImagem(items[i].getAsFile());
-          e.preventDefault();
-          break;
+    function aplicarMascaraTelefone(input) {
+        let v = input.value.replace(/\D/g, "");
+        if (v.length > 11) v = v.slice(0, 11);
+        if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+        else if (v.length > 5) v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
+        else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
+        input.value = v;
+    }
+
+    function aplicarMascaraMoeda(input) {
+        let v = input.value.replace(/\D/g, "");
+        if (v === "") { input.value = ""; return; }
+        v = (parseInt(v) / 100).toFixed(2);
+        v = v.replace(".", ",");
+        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+        input.value = "R$ " + v;
+    }
+
+    // Inicialização das Máscaras nos Inputs correspondentes
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.cpf-mask').forEach(i => i.addEventListener('input', () => aplicarMascaraCPF(i)));
+        document.querySelectorAll('.money-mask').forEach(i => i.addEventListener('input', () => aplicarMascaraMoeda(i)));
+        
+        // Ativadores de Drag & Drop para o comprovante de despesa
+        const dropZone = document.getElementById('drop-zone-comprovante');
+        if(dropZone) {
+            ['dragenter', 'dragover'].forEach(name => dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }, false));
+            ['dragleave', 'drop'].forEach(name => dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }, false));
+            dropZone.addEventListener('drop', (e) => { processarArquivosNativos(e.dataTransfer.files); }, false);
         }
-      }
+
+        // Listener global de interceptação do comando colar (CTRL+V / Printscreen colado)
+        document.addEventListener('paste', (e) => {
+            const abaAtiva = document.querySelector('.nav-link.active');
+            if (abaAtiva && abaAtiva.id === 'despesas-tab') {
+                const itens = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let index in itens) {
+                    const item = itens[index];
+                    if (item.kind === 'file') {
+                        const blob = item.getAsFile();
+                        processarArquivosNativos([blob]);
+                    }
+                }
+            }
+        });
     });
 
-    function processarImagem(file) {
-      if (!file) return;
-      if (file.size > 5 * 1024 * 1024) return alert("O arquivo excede o limite de 5MB. Tente uma imagem menor.");
-      
-      const reader = new FileReader();
-      reader.onload = e => {
-        arquivoBase64Global = e.target.result;
-        const img = document.getElementById('previewImg');
-        img.src = arquivoBase64Global;
-        img.style.display = 'block';
-      };
-      reader.readAsDataURL(file);
+    // ================= PROCESSAMENTO DE IMAGENS / ARQUIVOS / COMPROVANTES =================
+    function manipularSelecaoArquivo(input) {
+        if(input.files && input.files.length > 0) processarArquivosNativos(input.files);
     }
 
-    async function salvarPonto() {
-      const projeto = document.getElementById('pontoProjeto').value;
-      const tipo = document.getElementById('pontoTipo').value;
-      if (!projeto) return alert("Preencha o campo do projeto.");
+    function processarArquivosNativos(arquivos) {
+        if(arquivos.length === 0) return;
+        const arquivo = arquivos[0];
+        
+        comprovanteNome = arquivo.name || `print_capturado_${new Date().getTime()}.png`;
+        comprovanteMime = arquivo.type;
 
-      const resposta = await enviarParaBackend({ action: "salvarPonto", cpf: usuarioLogado.cpf, nome: usuarioLogado.nome, projeto: projeto, tipo: tipo });
-
-      if (resposta.success) {
-        alert("Ponto validado e registrado no sistema!");
-        document.getElementById('formPonto').reset();
-      } else {
-        alert("Erro ao salvar: " + resposta.mensagem);
-      }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            comprovanteB64 = e.target.result.split(',')[1]; // Extrai puro Base64 sem o cabeçalho data URI
+            
+            document.getElementById('preview-container').classList.remove('hidden');
+            document.getElementById('file-name-preview').innerText = `📄 Comprovante Adicionado: ${comprovanteNome}`;
+            
+            if(arquivo.type.startsWith('image/')) {
+                document.getElementById('img-preview').src = e.target.result;
+                document.getElementById('img-preview').classList.remove('hidden');
+            } else {
+                document.getElementById('img-preview').classList.add('hidden'); // PDF/Outros formatos ocultam img tag
+            }
+        };
+        reader.readAsDataURL(arquivo);
     }
 
-    async function salvarDespesa() {
-      const projeto = document.getElementById('despProjeto').value;
-      const valor = document.getElementById('despValor').value;
-      if (!projeto || !valor || !arquivoBase64Global) return alert("Preencha o projeto, valor e anexe o comprovante.");
+    // ================= ROTINA PRINCIPAL DE AUTENTICAÇÃO E LOGIN =================
+    async function loginPainel() {
+        const cpf = document.getElementById('cpf-login').value.replace(/\D/g, "");
+        if(cpf.length !== 11) return alert('Insira um número de CPF válido com 11 dígitos.');
 
-      const resposta = await enviarParaBackend({ action: "salvarDespesa", cpf: usuarioLogado.cpf, nome: usuarioLogado.nome, projeto: projeto, valor: valor, arquivo: arquivoBase64Global });
+        const btn = document.getElementById('btn-entrar');
+        btn.innerText = "Validando Acesso..."; btn.disabled = true;
 
-      if (resposta.success) {
-        alert("Despesa documentada com sucesso!");
-        document.getElementById('formDespesa').reset();
-        document.getElementById('previewImg').style.display = 'none';
-        arquivoBase64Global = "";
-      } else {
-        alert("Erro ao registrar: " + resposta.mensagem);
-      }
+        try {
+            const response = await fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: 'loginSupervisorPainel', cpf: cpf }) 
+            });
+            const res = await response.json();
+
+            if(res.success) {
+                dadosUsuario = { cpf: cpf, nome: res.nome, perfil: res.perfil };
+                projetosCache = res.projetos || [];
+
+                document.getElementById('txt-nome-gestor').innerText = res.nome;
+                document.getElementById('txt-perfil-gestor').innerText = res.perfil;
+
+                // Alimenta os seletores de ambos os módulos com a lista unificada de projetos ativos de hoje
+                atualizarDropdownProjetos(res.projetos);
+                atualizarDropdownConfigDespesas(res.configDespesas);
+
+                document.getElementById('view-login').classList.add('hidden');
+                document.getElementById('view-painel').classList.remove('hidden');
+            } else {
+                alert(res.error || 'Acesso negado. CPF não consta na lista de supervisores/diretores.');
+            }
+        } catch(err) {
+            alert("Falha técnica de comunicação com a API. Redirecionando...");
+        } finally {
+            btn.innerText = "Acessar Painel"; btn.disabled = false;
+        }
     }
-  </script>
+
+    function logoutPainel() {
+        clearInterval(loopSincronismo);
+        dadosUsuario = null;
+        projetoAtivo = null;
+        document.getElementById('cpf-login').value = '';
+        document.getElementById('view-painel').classList.add('hidden');
+        document.getElementById('view-login').classList.remove('hidden');
+        document.getElementById('area-detalhes-projeto').classList.add('hidden');
+        document.getElementById('sel-projeto-ativo').value = '';
+    }
+
+    function atualizarDropdownProjetos(lista) {
+        const selPonto = document.getElementById('sel-projeto-ativo');
+        const selDesp = document.getElementById('sel-despesa-projeto');
+
+        let opcoes = '<option value="">-- Selecione o Projeto --</option>';
+        lista.forEach((p, idx) => {
+            opcoes += `<option value="${idx}">${p.data} - ${p.cliente} - ${p.unidade}</option>`;
+        });
+
+        selPonto.innerHTML = opcoes;
+        selDesp.innerHTML = opcoes;
+    }
+
+    function atualizarDropdownConfigDespesas(lista) {
+        const sel = document.getElementById('sel-despesa-tipo');
+        let opcoes = '<option value="">-- Selecione o Tipo --</option>';
+        if(lista) {
+            lista.forEach(item => { opcoes += `<option value="${item}">${item}</option>`; });
+        }
+        sel.innerHTML = opcoes;
+    }
+
+    // ================= MÓDULO DE GESTÃO E PRESENÇA (MÓDULO ORIGINAL) =================
+    function selecionarProjetoAtivo(index) {
+        clearInterval(loopSincronismo);
+        if(index === "") {
+            document.getElementById('area-detalhes-projeto').classList.add('hidden');
+            return;
+        }
+
+        projetoAtivo = projetosCache[index];
+        
+        document.getElementById('info-cliente').innerText = projetoAtivo.cliente;
+        document.getElementById('info-unidade').innerText = projetoAtivo.unidade;
+        document.getElementById('info-data').innerText = projetoAtivo.data;
+        document.getElementById('info-status').innerText = projetoAtivo.status;
+        
+        // Gera a URL dinâmica parametrizada com o projeto ativo correspondente
+        document.getElementById('link-ponto').value = `${API_URL}?p=${projetoAtivo.rowId || btoa(encodeURIComponent(projetoAtivo.cliente + '|' + projetoAtivo.unidade))}`;
+
+        document.getElementById('area-detalhes-projeto').classList.remove('hidden');
+        
+        carregarListaPresencas(false);
+        // Mantém a rotina de pooling de 5 segundos se o projeto estiver aberto
+        if (projetoAtivo.status !== 'Encerrado') {
+            loopSincronismo = setInterval(() => { carregarListaPresencas(true); }, 5000);
+        }
+    }
+
+    async function carregarListaPresencas(isBackground) {
+        if (!projetoAtivo) return;
+        if (isTyping && isBackground) return; // Impede sobreposição de digitação do supervisor
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'getListaPresencas', projeto: projetoAtivo })
+            });
+            if (!response.ok) return;
+
+            const res = await response.json();
+            if (!res || !res.lista) return;
+
+            dadosGlobaisParaExcel = res.lista;
+            document.getElementById('contador-participantes').innerText = res.lista.length;
+
+            const tbody = document.getElementById('lista-presentes-sup');
+            if (res.lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">Aguardando registros dos colaboradores...</td></tr>';
+            } else {
+                tbody.innerHTML = res.lista.map((p, index) => `
+                    <tr data-rowid="${p.rowId}">
+                        <td class="fw-bold text-dark">
+                            <span class="text-muted me-2 small">#${index + 1}</span> ${p.nome}
+                        </td>
+                        <td>
+                            <select id="f-${p.rowId}" class="form-select form-select-sm" onfocus="isTyping = true" onblur="isTyping = false" ${projetoAtivo.status === 'Encerrado' ? 'disabled' : ''}>
+                                <option value="OPERAÇÃO" ${p.funcao === 'OPERAÇÃO' ? 'selected' : ''}>OPERAÇÃO</option>
+                                <option value="FRIOS" ${p.funcao === 'FRIOS' ? 'selected' : ''}>FRIOS</option>
+                                <option value="AÉREOS" ${p.funcao === 'AÉREOS' ? 'selected' : ''}>AÉREOS</option>
+                                <option value="PONTO-EXTRA" ${p.funcao === 'PONTO-EXTRA' ? 'selected' : ''}>PONTO-EXTRA</option>
+                                <option value="SUPERVISÃO" ${p.funcao === 'SUPERVISÃO' ? 'selected' : ''}>SUPERVISÃO</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" id="o-${p.rowId}" value="${p.obs || ''}" class="form-control form-control-sm" onfocus="isTyping = true" onblur="isTyping = false" ${projetoAtivo.status === 'Encerrado' ? 'readonly' : ''}>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        } catch (e) {
+            console.error("Falha silenciosa de sincronia de lista.");
+        }
+    }
+
+    async function salvarAlteracoes() {
+        const btn = document.getElementById('btn-salvar-apenas');
+        btn.innerText = "Processando..."; btn.disabled = true; isTyping = false;
+
+        try {
+            let listaParaSalvar = [];
+            document.querySelectorAll('tbody#lista-presentes-sup tr').forEach(tr => {
+                const rowId = tr.getAttribute('data-rowid');
+                if (rowId) {
+                    listaParaSalvar.push({
+                        rowId: parseInt(rowId),
+                        funcao: document.getElementById('f-' + rowId).value,
+                        obs: document.getElementById('o-' + rowId).value
+                    });
+                }
+            });
+
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'salvarApenas', lista: listaParaSalvar })
+            });
+            btn.innerText = "✓ Salvo com sucesso!";
+        } catch (e) {
+            alert("Erro nas alterações em tempo real.");
+        } finally {
+            setTimeout(() => { btn.innerText = "💾 Salvar Alterações"; btn.disabled = false; }, 2500);
+        }
+    }
+
+    async function encerrarProjeto() {
+        if (!confirm("⚠️ ATENÇÃO: Ao encerrar, este projeto travará novas entradas.\nContinuar?")) return;
+        const btn = document.getElementById('btn-encerrar');
+        btn.innerText = "Bloqueando..."; btn.disabled = true;
+
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'encerrarProjeto', project: projetoAtivo })
+            });
+            projetoAtivo.status = "Encerrado";
+            document.getElementById('info-status').innerText = "Encerrado";
+            clearInterval(loopSincronismo);
+            salvarAlteracoes();
+            carregarListaPresencas(false);
+        } catch (e) {
+            alert("Ocorreu uma instabilidade na gravação de encerramento.");
+            btn.disabled = false;
+        }
+    }
+
+    function exportarExcel() {
+        if (!dadosGlobaisParaExcel || dadosGlobaisParaExcel.length === 0) return alert("Vazio.");
+        const escapeCsv = (str) => !str ? '""' : '"' + String(str).replace(/"/g, '""').replace(/\n/g, " ") + '"';
+
+        let csv = [["Data", "Cliente", "Unidade", "CPF", "Nome Completo", "Função", "Observação"].join(";")];
+        dadosGlobaisParaExcel.forEach(p => {
+            let f = document.getElementById('f-' + p.rowId) ? document.getElementById('f-' + p.rowId).value : p.funcao;
+            let o = document.getElementById('o-' + p.rowId) ? document.getElementById('o-' + p.rowId).value : p.obs;
+            csv.push([escapeCsv(projetoAtivo.data), escapeCsv(projetoAtivo.cliente), escapeCsv(projetoAtivo.unidade), escapeCsv(p.cpf), escapeCsv(p.nome), escapeCsv(f), escapeCsv(o)].join(";"));
+        });
+
+        let blob = new Blob(["\ufeff" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
+        let link = document.createElement("a");
+        link.download = `Frequencia_${projetoAtivo.cliente}_${projetoAtivo.data.replace(/\//g, '-')}.csv`;
+        link.href = window.URL.createObjectURL(blob);
+        link.click();
+    }
+
+    function copiarLink() {
+        const input = document.getElementById('link-ponto');
+        input.select();
+        document.execCommand('copy');
+        alert("Link copiado! Envie aos colaboradores.");
+    }
+
+    // ================= NOVO MÓDULO DE LANÇAMENTO DE DESPESAS OPERACIONAIS =================
+    async function salvarMóduloDespesa(acao) {
+        const projetoIdx = document.getElementById('sel-despesa-projeto').value;
+        const tipo = document.getElementById('sel-despesa-tipo').value;
+        const valor = document.getElementById('valor-despesa').value;
+        const obs = document.getElementById('obs-despesa').value;
+
+        if(!projetoIdx) return alert("Vincule um projeto a este lançamento.");
+        if(!tipo) return alert("Determine a classificação da despesa.");
+        if(!valor || valor === "R$ 0,00") return alert("Defina o valor da operação financeira.");
+
+        const projeto = projetosCache[projetoIdx];
+        
+        let btn = (acao === 'nova') ? document.getElementById('btn-nova-despesa') : document.getElementById('btn-finalizar-despesa');
+        const originalTxt = btn.innerText;
+        btn.innerText = "Gravando Lançamento..."; btn.disabled = true;
+
+        // Payload estruturado enviando metadados do gestor, do projeto e o anexo/print convertido em base64
+        const payload = {
+            action: 'salvarDespesaPainel',
+            dadosGestor: dadosUsuario,
+            projeto: projeto,
+            tipo: tipo,
+            valor: valor,
+            obs: obs,
+            comprovante: {
+                base64: comprovanteB64,
+                mime: comprovanteMime,
+                nome: comprovanteNome
+            }
+        };
+
+        try {
+            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const res = await response.json();
+
+            if(res.success) {
+                alert("Despesa e comprovante processados com sucesso na Planilha!");
+                
+                // Reseta os campos de despesa para permitir nova rodada limpa
+                document.getElementById('sel-despesa-tipo').value = '';
+                document.getElementById('valor-despesa').value = '';
+                document.getElementById('obs-despesa').value = '';
+                document.getElementById('file-comprovante').value = '';
+                document.getElementById('preview-container').classList.add('hidden');
+                comprovanteB64 = null; comprovanteMime = null; comprovanteNome = null;
+
+                if(acao === 'finalizar') {
+                    document.getElementById('sel-despesa-projeto').value = '';
+                    // Alterna automaticamente a aba para a visão principal de monitoramento
+                    const firstTab = new bootstrap.Tab(document.getElementById('projetos-tab'));
+                    firstTab.show();
+                }
+            } else {
+                alert(res.error || "Ocorreu um erro interno de validação ao salvar.");
+            }
+        } catch(err) {
+            alert("Erro técnico de rede ao persistir os dados da despesa.");
+        } finally {
+            btn.innerText = originalTxt; btn.disabled = false;
+        }
+    }
+</script>
 </body>
 </html>
