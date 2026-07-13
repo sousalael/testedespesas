@@ -1,610 +1,544 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title>Painel de Gestão - Formula Code</title>
-    <style>
-        .hidden { display: none !important; }
-
-        /* ================= IDENTIDADE VISUAL FORMULA CODE ================= */
-        :root {
-            --fc-primaria: #5F65F4;
-            --fc-fundo: #f8f9fa;
-            --fc-sucesso: #198754;
-        }
-
-        body {
-            background-color: var(--fc-fundo) !important;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .text-primary { color: var(--fc-primaria) !important; }
-        .bg-primary { background-color: var(--fc-primaria) !important; }
-        .btn-primary {
-            background-color: var(--fc-primaria) !important;
-            border-color: var(--fc-primaria) !important;
-            color: #ffffff !important;
-        }
-        .btn-primary:hover { filter: brightness(0.9); }
-
-        .fc-container {
-            max-width: 900px; 
-            background: #ffffff; 
-            padding: 30px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.06); 
-            border: 1px solid #eaeaea;
-            margin-top: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .nav-tabs .nav-link { color: #6c757d; font-weight: bold; border: none; }
-        .nav-tabs .nav-link.active { color: var(--fc-primaria); border-bottom: 3px solid var(--fc-primaria); background: none; }
-
-        /* Área de Upload/Paste do Comprovante */
-        .upload-zone {
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            background: #fafafa;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .upload-zone:hover, .upload-zone.dragover {
-            border-color: var(--fc-primaria);
-            background: #f1f2ff;
-        }
-        .preview-img {
-            max-width: 100%;
-            max-height: 150px;
-            border-radius: 6px;
-            margin-top: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        /* customização de tabelas */
-        .table th { background-color: #f1f2f6 !important; color: #4b5563; font-weight: 600; }
-    </style>
-</head>
-<body class="p-3">
-
-<div class="container fc-container mx-auto">
+  <meta charset="UTF-8">
+  <title>Sistema Integrado de Gestão - Formula Code</title>
+  <style>
+    :root { --primary: #0F172A; --accent: #3B82F6; --bg: #F8FAFC; --text: #334155; --border: #E2E8F0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
+    .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    h1, h2, h3 { color: var(--primary); margin-top: 0; }
+    .hidden { display: none !important; }
     
-    <div id="view-login">
-        <div class="text-center mb-4">
-            <h2 class="text-primary fw-bold">Formula Code</h2>
-            <p class="text-muted">Painel de Controle de Operações e Despesas</p>
-        </div>
-        
-        <div class="card p-4 mx-auto shadow-sm" style="max-width: 450px;">
-            <label class="form-label fw-bold mb-2">Identificação do Gestor (CPF):</label>
-            <input type="text" id="cpf-login" class="form-control form-control-lg mb-3 text-center cpf-mask" placeholder="000.000.000-00" maxlength="14">
-            <button id="btn-entrar" class="btn btn-primary w-100 py-2 fw-bold" onclick="loginPainel()">Acessar Painel</button>
-        </div>
+    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 6px; border: 1px solid var(--border); box-sizing: border-box; font-size: 14px; }
+    button { background-color: var(--accent); color: white; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; }
+    button:hover { opacity: 0.9; }
+    button.btn-danger { background-color: #EF4444; }
+    button.btn-secondary { background-color: #64748B; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background-color: #F1F5F9; font-weight: 600; }
+    td select, td input { margin: 0; padding: 6px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    @media(max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+    .nav-tabs button { width: auto; background: none; color: var(--text); border: 1px solid var(--border); margin: 0; }
+    .nav-tabs button.active { background: var(--accent); color: white; border-color: var(--accent); }
+    
+    .status-msg { margin: 10px 0; padding: 10px; border-radius: 6px; font-weight: 500; text-align: center; }
+    .success { background: #D1FAE5; color: #065F46; }
+    .error { background: #FEE2E2; color: #991B1B; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div id="msgGeral" class="status-msg hidden"></div>
+
+  <div id="view-auth">
+    <h2 id="auth-title">Autenticação</h2>
+    <p id="auth-subtitle">Acesso Restrito ao Painel Administrativo</p>
+    <input type="text" id="cpfAuth" placeholder="Digite seu CPF" maxlength="14" oninput="mascaraCPF(this)">
+    <button id="btnAcessar" onclick="processarAutenticacao()">Acessar Painel</button>
+    
+    <div id="menuPontoExtras" class="hidden" style="margin-top: 25px; border-top: 2px dashed var(--border); padding-top: 20px;">
+      <div style="display: flex; gap: 10px;">
+        <button class="btn-secondary" onclick="alternarDiv('formCadastroColab')">Cadastrar Novo Colaborador</button>
+        <button class="btn-secondary" onclick="alternarDiv('formAlterarPix')">Alterar Chave Pix</button>
+      </div>
+      
+      <div id="formCadastroColab" class="hidden" style="background:#F1F5F9; padding: 20px; border-radius: 8px; margin-top: 15px;">
+        <h3>Cadastrar Novo Colaborador</h3>
+        <input type="text" id="cadCpf" placeholder="CPF" maxlength="14" oninput="mascaraCPF(this)">
+        <input type="text" id="cadNome" placeholder="Nome Completo">
+        <select id="cadTipoPix">
+          <option value="CPF">Tipo de Chave: CPF</option>
+          <option value="CELULAR">Tipo de Chave: Celular</option>
+          <option value="EMAIL">Tipo de Chave: E-mail</option>
+        </select>
+        <input type="text" id="cadPix" placeholder="Chave Pix" oninput="aplicarMascaraPix(this)">
+        <button onclick="salvarNovoColaborador()">Salvar Novo Cadastro</button>
+      </div>
+
+      <div id="formAlterarPix" class="hidden" style="background:#F1F5F9; padding: 20px; border-radius: 8px; margin-top: 15px;">
+        <h3>Alterar Chave Pix Cadastrada</h3>
+        <input type="text" id="altCpf" placeholder="Confirme seu CPF" maxlength="14" oninput="mascaraCPF(this)">
+        <select id="altTipoPix">
+          <option value="CPF">Tipo de Chave: CPF</option>
+          <option value="CELULAR">Tipo de Chave: Celular</option>
+          <option value="EMAIL">Tipo de Chave: E-mail</option>
+        </select>
+        <input type="text" id="altPix" placeholder="Nova Chave Pix" oninput="aplicarMascaraPix(this)">
+        <button onclick="salvarEdicaoPix()">Sobrescrever Chave Antiga</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-dashboard" class="hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h2 id="gestorNome" style="margin: 0;">Painel de Controle</h2>
+      <button style="width: auto; padding: 8px 15px; background: #64748B;" onclick="location.reload()">Sair do Sistema</button>
     </div>
 
-    <div id="view-painel" class="hidden">
-        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
-            <div>
-                <h4 class="text-primary fw-bold mb-0">Painel Administrativo</h4>
-                <small class="text-muted">Gestor: <span id="txt-nome-gestor" class="fw-bold text-dark">...</span> | Perfil: <span id="txt-perfil-gestor" class="badge bg-secondary">...</span></small>
-            </div>
-            <button class="btn btn-sm btn-outline-danger" onclick="logoutPainel()">Sair do Sistema</button>
-        </div>
-
-        <ul class="nav nav-tabs mb-4" id="painelTabs" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="projetos-tab" data-bs-toggle="tab" data-bs-target="#tab-projetos" type="button" role="tab">📋 Controle de Presença</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="despesas-tab" data-bs-toggle="tab" data-bs-target="#tab-despesas" type="button" role="tab">💸 Lançamento de Despesas</button>
-            </li>
-        </ul>
-
-        <div class="tab-content" id="conteudoPainelTabs">
-            
-            <div class="tab-pane fade show active" id="tab-projetos" role="tabpanel">
-                <div class="row g-3 align-items-end mb-4">
-                    <div class="col-md-8">
-                        <label class="form-label fw-bold text-secondary">Selecione o Projeto Ativo (Data de Hoje):</label>
-                        <select id="sel-projeto-ativo" class="form-select" onchange="selecionarProjetoAtivo(this.value)">
-                            <option value="">-- Carregando projetos ativos --</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="area-detalhes-projeto" class="hidden">
-                    <div class="card bg-light p-3 mb-4 border-0 shadow-sm">
-                        <div class="row">
-                            <div class="col-6 col-md-3"><strong>Cliente:</strong> <span id="info-cliente"></span></div>
-                            <div class="col-6 col-md-3"><strong>Unidade:</strong> <span id="info-unidade"></span></div>
-                            <div class="col-6 col-md-3"><strong>Data:</strong> <span id="info-data"></span></div>
-                            <div class="col-6 col-md-3"><strong>Status:</strong> <span id="info-status" class="badge bg-success"></span></div>
-                        </div>
-                    </div>
-
-                    <div class="mb-4 p-3 border rounded">
-                        <label class="form-label fw-bold text-primary">Link de Presença para os Colaboradores:</label>
-                        <div class="input-group">
-                            <input type="text" id="link-ponto" class="form-control bg-white" readonly>
-                            <button class="btn btn-outline-primary fw-bold" type="button" onclick="copiarLink()">📋 Copiar Link</button>
-                        </div>
-                        <small class="text-muted d-block mt-1">Envie este link para que a equipe registre a presença diretamente do celular localmente.</small>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="fw-bold mb-0">Colaboradores Presentes (<span id="contador-participantes">0</span>)</h5>
-                        <small class="text-muted">Atualização automática em tempo real</small>
-                    </div>
-
-                    <div class="table-responsive border rounded mb-3">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead>
-                                <tr>
-                                    <th>Nome do Colaborador</th>
-                                    <th style="width: 200px;">Função Designada</th>
-                                    <th>Observações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="lista-presentes-sup">
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted py-3">Nenhum registro encontrado ainda neste projeto.</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center gap-2">
-                        <button id="btn-salvar-apenas" class="btn btn-primary fw-bold" onclick="salvarAlteracoes()">💾 Salvar Alterações</button>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-success fw-bold" onclick="exportarExcel()">📊 Exportar Excel</button>
-                            <button id="btn-encerrar" class="btn btn-danger fw-bold" onclick="encerrarProjeto()">🔒 Encerrar Projeto</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="tab-despesas" role="tabpanel">
-                <div class="card p-4 border-0 bg-light shadow-sm">
-                    <h5 class="fw-bold text-primary mb-3">Registrar Nova Despesa Operacional</h5>
-                    
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Projeto Vinculado:</label>
-                            <select id="sel-despesa-projeto" class="form-select">
-                                <option value="">-- Selecione o Projeto --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold">Tipo de Despesa:</label>
-                            <select id="sel-despesa-tipo" class="form-select">
-                                <option value="">-- Selecione o Tipo (Aba Config_Despesas) --</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold">Valor do Lançamento:</label>
-                            <input type="text" id="valor-despesa" class="form-control money-mask text-end fw-bold fs-5" placeholder="R$ 0,00">
-                        </div>
-                        <div class="col-md-8">
-                            <label class="form-label fw-bold">Observações Pertinentes:</label>
-                            <input type="text" id="obs-despesa" class="form-control" placeholder="Ex: Combustível van de transporte de equipe / Almoço técnico">
-                        </div>
-
-                        <div class="col-12 mt-4">
-                            <label class="form-label fw-bold">Comprovante Digitalizado (Foto, Anexo ou Print da Tela):</label>
-                            <input type="file" id="file-comprovante" class="hidden" accept="image/*,application/pdf" onchange="manipularSelecaoArquivo(this)">
-                            
-                            <div id="drop-zone-comprovante" class="upload-zone" onclick="document.getElementById('file-comprovante').click()">
-                                <span class="fs-4 d-block">📸 📁 📋</span>
-                                <span class="fw-bold text-secondary">Clique para anexar, arraste o arquivo aqui ou dê <kbd>Ctrl + V</kbd> para colar o print.</span>
-                                <div id="preview-container" class="hidden">
-                                    <img id="img-preview" src="" class="preview-img" alt="Preview">
-                                    <div id="file-name-preview" class="text-success small fw-bold mt-2"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-3 mt-4">
-                        <button id="btn-nova-despesa" class="btn btn-outline-primary w-50 py-2 fw-bold" onclick="salvarMóduloDespesa('nova')">➕ Nova Despesa</button>
-                        <button id="btn-finalizar-despesa" class="btn btn-success w-50 py-2 fw-bold" onclick="salvarMóduloDespesa('finalizar')">✓ Finalizar e Concluir</button>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+    <div id="navGestao" class="nav-tabs">
+      <button id="tabOperacao" class="active" onclick="mudarAbaDash('operacao')">Operação de Campo</button>
+      <button id="tabRelatorios" onclick="mudarAbaDash('relatorios')">Relatórios & Histórico</button>
     </div>
+
+    <div id="abaOperacao">
+      <div class="grid-2">
+        <div>
+          <h3>Projetos do Dia</h3>
+          <select id="comboProjetos" onchange="selecionarProjeto()"><option value="">Selecione uma operação ativa...</option></select>
+          <button class="btn-danger" id="btnEncerrar" onclick="encerrarProjeto()" style="display:none; margin-top:10px;">Encerrar Projeto Definitivamente</button>
+        </div>
+        <div id="blocoDespesas" class="hidden">
+          <h3>Lançamento de Despesa</h3>
+          <select id="tipoDespesa"></select>
+          <input type="text" id="valorDespesa" placeholder="Valor Lanzado (Ex: 125,50)">
+          <input type="text" id="obsDespesa" placeholder="Motivo / Observação">
+          <input type="file" id="arquivoDespesa" accept="image/*,.pdf">
+          <button onclick="salvarDespesa()">Registrar Despesa com Comprovante</button>
+        </div>
+      </div>
+
+      <div id="blocoEquipe" class="hidden" style="margin-top: 30px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <h3 style="margin: 0;">Lista de Presença Realizada</h3>
+          <button style="width: 180px;" onclick="salvarTabelaEquipe()">Salvar Alterações</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px;">Nº</th>
+              <th>Colaborador</th>
+              <th style="width: 200px;">Função Alocada</th>
+              <th>Observação do Supervisor</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyEquipe"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="abaRelatorios" class="hidden">
+      <h3>Histórico de Projetos Encerrados</h3>
+      <p style="font-size: 13px; color:#64748B; margin-top:-10px;">Selecione os projetos abaixo para exportar a consolidação em arquivo .csv</p>
+      <div style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); background: #F8FAFC; padding: 15px; border-radius: 6px; margin-bottom: 12px;" id="listaEncerrados">
+        </div>
+      <button class="btn-secondary" onclick="exportarCsvSelecionados()">Exportar Selecionados (.CSV)</button>
+
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid var(--border);">
+
+      <h3>Consultar Participação de Colaborador</h3>
+      <div class="grid-2">
+        <input type="text" id="pesqTermo" placeholder="Pesquise por CPF ou parte do nome">
+        <div style="display: flex; gap: 10px;">
+          <input type="date" id="pesqDataIni" title="Data Inicial">
+          <input type="date" id="pesqDataFim" title="Data Final">
+        </div>
+      </div>
+      <button onclick="pesquisarHistoricoColab()">Executar Filtro de Pesquisa</button>
+
+      <table style="margin-top: 20px;">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Nome do Colaborador</th>
+            <th>Projeto / Unidade</th>
+            <th>Função Executada</th>
+            <th>Observações</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyPesquisa"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
-    // =========================================================================
-    // DECLARAÇÃO DO ENDPOINT DO GOOGLE APPS SCRIPT
-    // =========================================================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbzNFyOTg9-mSiNdRtzNfVuzSrNJaL2Hr6a-pQnV_MNwwiTLD5lbrBc_ZPcmMHw7klBK/exec'; 
+  // CAPTURA A INJEÇÃO DINÂMICA DO GOOGLE APPS SCRIPT (?p=...)
+  const ID_PROJETO_PONTO = "https://script.google.com/macros/s/AKfycbwcGNE4-bjXF9aHzXUUdTjyvExGLCc_C4_Gap87CnbMhW83vyShsvCEG901q9zabfPy/exec"; 
+  const LISTA_FUNCOES = ["OPERAÇÃO", "FRIOS", "AÉREOS", "PONTO-EXTRA", "SUPERVISÃO"];
+  
+  let dadosGlobaisGestor = null;
+  let projetoSelecionado = null;
+  let timerRefresh = null;
+
+  window.onload = () => {
+    // Se vier com o parâmetro de projeto pela URL, reconfigura a tela nativa para Batida de Ponto
+    if (ID_PROJETO_PONTO && ID_PROJETO_PONTO.trim() !== "") {
+      document.getElementById('auth-title').innerText = "Registro de Presença";
+      document.getElementById('auth-subtitle').innerText = "Informe seu CPF para registrar sua entrada em campo.";
+      document.getElementById('menuPontoExtras').classList.remove('hidden');
+      document.getElementById('btnAcessar').innerText = "Confirmar Presença";
+    }
+  };
+
+  function mostrarMsg(texto, tipo) {
+    const d = document.getElementById('msgGeral');
+    d.className = `status-msg ${tipo}`; d.innerText = texto; d.classList.remove('hidden');
+    setTimeout(() => d.classList.add('hidden'), 5000);
+  }
+
+  function alternarDiv(id) {
+    const el = document.getElementById(id);
+    el.classList.contains('hidden') ? el.classList.remove('hidden') : el.classList.add('hidden');
+  }
+
+  // Máscaras de Input
+  function mascaraCPF(i) {
+    let v = i.value.replace(/\D/g, "");
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d)/, "$1.$2");
+    v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    i.value = v;
+  }
+
+  function aplicarMascaraPix(input) {
+    let selectId = input.id === 'cadPix' ? 'cadTipoPix' : 'altTipoPix';
+    let tipo = document.getElementById(selectId).value;
+    let v = input.value;
+    if (tipo === 'CPF') {
+      mascaraCPF(input);
+    } else if (tipo === 'CELULAR') {
+      v = v.replace(/\D/g, "");
+      v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+      v = v.replace(/(\d)(\d{4})$/, "$1-$2");
+      input.value = v;
+    }
+  }
+  
+  document.getElementById('cadTipoPix').addEventListener('change', () => document.getElementById('cadPix').value = "");
+  document.getElementById('altTipoPix').addEventListener('change', () => document.getElementById('altPix').value = "");
+
+  // Comunicação Backend
+  function callBackend(payload, callback) {
+    google.script.run.withSuccessHandler(res => {
+      let data = JSON.parse(res);
+      callback(data);
+    }).doPost({ postData: { contents: JSON.stringify(payload) } });
+  }
+
+  function processarAutenticacao() {
+    let cpf = document.getElementById('cpfAuth').value.replace(/\D/g, "");
+    if(cpf.length !== 11) return mostrarMsg('CPF informado é inválido.', 'error');
     
-    // Variáveis Globais de Controle de Estado
-    let dadosUsuario = null; 
-    let projetosCache = []; 
-    let projetoAtivo = null; 
-    let dadosGlobaisParaExcel = []; 
-    let isTyping = false; 
-    let loopSincronismo = null; 
-    let comprovanteB64 = null; 
-    let comprovanteMime = null;
-    let comprovanteNome = null;
-
-    // ================= SISTEMA DE MÁSCARAS AUTOMÁTICAS =================
-    function aplicarMascaraCPF(input) {
-        let v = input.value.replace(/\D/g, "");
-        if (v.length > 11) v = v.slice(0, 11);
-        if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{1,2})$/, "$1.$2.$3-$4");
-        else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{1,3})$/, "$1.$2.$3");
-        else if (v.length > 3) v = v.replace(/^(\d{3})(\d{1,3})$/, "$1.$2");
-        input.value = v;
-    }
-
-    function aplicarMascaraTelefone(input) {
-        let v = input.value.replace(/\D/g, "");
-        if (v.length > 11) v = v.slice(0, 11);
-        if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
-        else if (v.length > 5) v = v.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
-        else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})$/, "($1) $2");
-        input.value = v;
-    }
-
-    function aplicarMascaraMoeda(input) {
-        let v = input.value.replace(/\D/g, "");
-        if (v === "") { input.value = ""; return; }
-        v = (parseInt(v) / 100).toFixed(2);
-        v = v.replace(".", ",");
-        v = v.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
-        input.value = "R$ " + v;
-    }
-
-    // Inicialização das Máscaras nos Inputs correspondentes
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.cpf-mask').forEach(i => i.addEventListener('input', () => aplicarMascaraCPF(i)));
-        document.querySelectorAll('.money-mask').forEach(i => i.addEventListener('input', () => aplicarMascaraMoeda(i)));
-        
-        // Ativadores de Drag & Drop para o comprovante de despesa
-        const dropZone = document.getElementById('drop-zone-comprovante');
-        if(dropZone) {
-            ['dragenter', 'dragover'].forEach(name => dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.add('dragover'); }, false));
-            ['dragleave', 'drop'].forEach(name => dropZone.addEventListener(name, (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); }, false));
-            dropZone.addEventListener('drop', (e) => { processarArquivosNativos(e.dataTransfer.files); }, false);
+    // CASO 1: Rota Batida de Ponto do Colaborador
+    if (ID_PROJETO_PONTO) {
+      let prjParts = ID_PROJETO_PONTO.split('|'); 
+      if(prjParts.length < 3) return mostrarMsg("Link parametrizado incorretamente.", 'error');
+      
+      let btn = document.getElementById('btnAcessar'); btn.disabled = true; btn.innerText = "Registrando...";
+      callBackend({
+        action: 'registrarPresenca', cpf: cpf,
+        projeto: { data: prjParts[0], cliente: prjParts[1], unidade: prjParts[2] }
+      }, (res) => {
+        btn.disabled = false; btn.innerText = "Confirmar Presença";
+        if(res.success) {
+          mostrarMsg(`Presença confirmada com sucesso para: ${res.nome}!`, 'success');
+          document.getElementById('cpfAuth').value = "";
+        } else {
+          mostrarMsg(res.error, 'error');
         }
+      });
+      return;
+    }
+    
+    // CASO 2: Rota de Acesso à Gestão (Supervisor / Diretor)
+    let btn = document.getElementById('btnAcessar'); btn.disabled = true; btn.innerText = "Verificando Credenciais...";
+    callBackend({ action: 'loginSupervisorPainel', cpf: cpf }, (res) => {
+      if (res.success) {
+        dadosGlobaisGestor = res;
+        document.getElementById('view-auth').classList.add('hidden');
+        document.getElementById('view-dashboard').classList.remove('hidden');
+        document.getElementById('gestorNome').innerText = `Gestão - ${res.nome} (${res.perfil})`;
+        
+        // Carrega relatórios de forma universal para perfis administrativos cadastrados
+        carregarProjetosEncerrados();
 
-        // Listener global de interceptação do comando colar (CTRL+V / Printscreen colado)
-        document.addEventListener('paste', (e) => {
-            const abaAtiva = document.querySelector('.nav-link.active');
-            if (abaAtiva && abaAtiva.id === 'despesas-tab') {
-                const itens = (e.clipboardData || e.originalEvent.clipboardData).items;
-                for (let index in itens) {
-                    const item = itens[index];
-                    if (item.kind === 'file') {
-                        const blob = item.getAsFile();
-                        processarArquivosNativos([blob]);
-                    }
-                }
-            }
+        let selectPrj = document.getElementById('comboProjetos');
+        res.projetos.forEach(p => {
+          let opt = document.createElement('option');
+          opt.value = JSON.stringify(p);
+          opt.text = `${p.cliente} - ${p.unidade} (${p.data})`;
+          selectPrj.appendChild(opt);
         });
+        
+        let selectDesp = document.getElementById('tipoDespesa');
+        res.configDespesas.forEach(d => {
+          let opt = document.createElement('option'); opt.value = d; opt.text = d;
+          selectDesp.appendChild(opt);
+        });
+      } else {
+        btn.disabled = false; btn.innerText = "Acessar Painel";
+        mostrarMsg(res.error, 'error');
+      }
     });
+  }
 
-    // ================= PROCESSAMENTO DE IMAGENS / ARQUIVOS / COMPROVANTES =================
-    function manipularSelecaoArquivo(input) {
-        if(input.files && input.files.length > 0) processarArquivosNativos(input.files);
+  // ====================================================================
+  // CONTROLE DA OPERAÇÃO DE CAMPO & REFRESH INTELIGENTE
+  // ====================================================================
+  function selecionarProjeto() {
+    let val = document.getElementById('comboProjetos').value;
+    if (!val) {
+      document.getElementById('blocoDespesas').classList.add('hidden');
+      document.getElementById('blocoEquipe').classList.add('hidden');
+      document.getElementById('btnEncerrar').style.display = 'none';
+      clearInterval(timerRefresh);
+      return;
     }
+    
+    projetoSelecionado = JSON.parse(val);
+    document.getElementById('blocoDespesas').classList.remove('hidden');
+    document.getElementById('blocoEquipe').classList.remove('hidden');
+    document.getElementById('btnEncerrar').style.display = 'block';
+    
+    document.getElementById('tbodyEquipe').innerHTML = ""; 
+    carregarEquipe();
+    clearInterval(timerRefresh);
+    timerRefresh = setInterval(carregarEquipe, 10000); // REFRESH OBRIGATÓRIO DE 10 SEGUNDOS
+  }
 
-    function processarArquivosNativos(arquivos) {
-        if(arquivos.length === 0) return;
-        const arquivo = arquivos[0];
+  function carregarEquipe() {
+    if(!projetoSelecionado) return;
+    callBackend({ action: 'getListaPresencas', projeto: projetoSelecionado }, (res) => {
+      if(res.success) renderizarTabelaSemApagarInputs(res.lista);
+    });
+  }
+
+  // MOTOR CRÍTICO: Atualiza e insere novos registros mantendo os inputs intactos
+  function renderizarTabelaSemApagarInputs(lista) {
+    let tbody = document.getElementById('tbodyEquipe');
+    
+    lista.forEach((item, index) => {
+      let trExistente = document.getElementById(`row-${item.rowId}`);
+      if (!trExistente) {
+        let tr = document.createElement('tr');
+        tr.id = `row-${item.rowId}`;
         
-        comprovanteNome = arquivo.name || `print_capturado_${new Date().getTime()}.png`;
-        comprovanteMime = arquivo.type;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            comprovanteB64 = e.target.result.split(',')[1]; // Extrai puro Base64 sem o cabeçalho data URI
-            
-            document.getElementById('preview-container').classList.remove('hidden');
-            document.getElementById('file-name-preview').innerText = `📄 Comprovante Adicionado: ${comprovanteNome}`;
-            
-            if(arquivo.type.startsWith('image/')) {
-                document.getElementById('img-preview').src = e.target.result;
-                document.getElementById('img-preview').classList.remove('hidden');
-            } else {
-                document.getElementById('img-preview').classList.add('hidden'); // PDF/Outros formatos ocultam img tag
-            }
-        };
-        reader.readAsDataURL(arquivo);
-    }
-
-    // ================= ROTINA PRINCIPAL DE AUTENTICAÇÃO E LOGIN =================
-    async function loginPainel() {
-        const cpf = document.getElementById('cpf-login').value.replace(/\D/g, "");
-        if(cpf.length !== 11) return alert('Insira um número de CPF válido com 11 dígitos.');
-
-        const btn = document.getElementById('btn-entrar');
-        btn.innerText = "Validando Acesso..."; btn.disabled = true;
-
-        try {
-            const response = await fetch(API_URL, { 
-                method: 'POST', 
-                body: JSON.stringify({ action: 'loginSupervisorPainel', cpf: cpf }) 
-            });
-            const res = await response.json();
-
-            if(res.success) {
-                dadosUsuario = { cpf: cpf, nome: res.nome, perfil: res.perfil };
-                projetosCache = res.projetos || [];
-
-                document.getElementById('txt-nome-gestor').innerText = res.nome;
-                document.getElementById('txt-perfil-gestor').innerText = res.perfil;
-
-                // Alimenta os seletores de ambos os módulos com a lista unificada de projetos ativos de hoje
-                atualizarDropdownProjetos(res.projetos);
-                atualizarDropdownConfigDespesas(res.configDespesas);
-
-                document.getElementById('view-login').classList.add('hidden');
-                document.getElementById('view-painel').classList.remove('hidden');
-            } else {
-                alert(res.error || 'Acesso negado. CPF não consta na lista de supervisores/diretores.');
-            }
-        } catch(err) {
-            alert("Falha técnica de comunicação com a API. Redirecionando...");
-        } finally {
-            btn.innerText = "Acessar Painel"; btn.disabled = false;
-        }
-    }
-
-    function logoutPainel() {
-        clearInterval(loopSincronismo);
-        dadosUsuario = null;
-        projetoAtivo = null;
-        document.getElementById('cpf-login').value = '';
-        document.getElementById('view-painel').classList.add('hidden');
-        document.getElementById('view-login').classList.remove('hidden');
-        document.getElementById('area-detalhes-projeto').classList.add('hidden');
-        document.getElementById('sel-projeto-ativo').value = '';
-    }
-
-    function atualizarDropdownProjetos(lista) {
-        const selPonto = document.getElementById('sel-projeto-ativo');
-        const selDesp = document.getElementById('sel-despesa-projeto');
-
-        let opcoes = '<option value="">-- Selecione o Projeto --</option>';
-        lista.forEach((p, idx) => {
-            opcoes += `<option value="${idx}">${p.data} - ${p.cliente} - ${p.unidade}</option>`;
+        let selectHtml = `<select id="funcao-${item.rowId}">`;
+        LISTA_FUNCOES.forEach(f => {
+          let sel = (f === item.funcao) ? 'selected' : '';
+          selectHtml += `<option value="${f}" ${sel}>${f}</option>`;
         });
-
-        selPonto.innerHTML = opcoes;
-        selDesp.innerHTML = opcoes;
-    }
-
-    function atualizarDropdownConfigDespesas(lista) {
-        const sel = document.getElementById('sel-despesa-tipo');
-        let opcoes = '<option value="">-- Selecione o Tipo --</option>';
-        if(lista) {
-            lista.forEach(item => { opcoes += `<option value="${item}">${item}</option>`; });
-        }
-        sel.innerHTML = opcoes;
-    }
-
-    // ================= MÓDULO DE GESTÃO E PRESENÇA (MÓDULO ORIGINAL) =================
-    function selecionarProjetoAtivo(index) {
-        clearInterval(loopSincronismo);
-        if(index === "") {
-            document.getElementById('area-detalhes-projeto').classList.add('hidden');
-            return;
-        }
-
-        projetoAtivo = projetosCache[index];
+        selectHtml += `</select>`;
         
-        document.getElementById('info-cliente').innerText = projetoAtivo.cliente;
-        document.getElementById('info-unidade').innerText = projetoAtivo.unidade;
-        document.getElementById('info-data').innerText = projetoAtivo.data;
-        document.getElementById('info-status').innerText = projetoAtivo.status;
-        
-        // Gera a URL dinâmica parametrizada com o projeto ativo correspondente
-        document.getElementById('link-ponto').value = `${API_URL}?p=${projetoAtivo.rowId || btoa(encodeURIComponent(projetoAtivo.cliente + '|' + projetoAtivo.unidade))}`;
+        tr.innerHTML = `
+          <td><strong>${index + 1}</strong></td>
+          <td>${item.nome}<br><small style="color:#64748B">${item.cpf}</small></td>
+          <td>${selectHtml}</td>
+          <td><input type="text" id="obs-${item.rowId}" value="${item.obs || ''}" placeholder="Inserir observação..."></td>
+        `;
+        tbody.appendChild(tr);
+      } else {
+        // Atualiza apenas o contador sequencial, blindando o estado atual dos inputs de digitação
+        trExistente.children[0].innerHTML = `<strong>${index + 1}</strong>`;
+      }
+    });
+  }
 
-        document.getElementById('area-detalhes-projeto').classList.remove('hidden');
-        
-        carregarListaPresencas(false);
-        // Mantém a rotina de pooling de 5 segundos se o projeto estiver aberto
-        if (projetoAtivo.status !== 'Encerrado') {
-            loopSincronismo = setInterval(() => { carregarListaPresencas(true); }, 5000);
-        }
+  function salvarTabelaEquipe() {
+    let tbody = document.getElementById('tbodyEquipe');
+    let lista = [];
+    for(let tr of tbody.children) {
+      let id = tr.id.split('-')[1];
+      lista.push({
+        rowId: id,
+        funcao: document.getElementById(`funcao-${id}`).value,
+        obs: document.getElementById(`obs-${id}`).value
+      });
     }
+    
+    callBackend({ action: 'salvarApenas', lista: lista }, (res) => {
+      res.success ? mostrarMsg('Alterações da equipe salvas com sucesso!', 'success') : mostrarMsg('Erro na gravação.', 'error');
+    });
+  }
 
-    async function carregarListaPresencas(isBackground) {
-        if (!projetoAtivo) return;
-        if (isTyping && isBackground) return; // Impede sobreposição de digitação do supervisor
-
-        try {
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'getListaPresencas', projeto: projetoAtivo })
-            });
-            if (!response.ok) return;
-
-            const res = await response.json();
-            if (!res || !res.lista) return;
-
-            dadosGlobaisParaExcel = res.lista;
-            document.getElementById('contador-participantes').innerText = res.lista.length;
-
-            const tbody = document.getElementById('lista-presentes-sup');
-            if (res.lista.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">Aguardando registros dos colaboradores...</td></tr>';
-            } else {
-                tbody.innerHTML = res.lista.map((p, index) => `
-                    <tr data-rowid="${p.rowId}">
-                        <td class="fw-bold text-dark">
-                            <span class="text-muted me-2 small">#${index + 1}</span> ${p.nome}
-                        </td>
-                        <td>
-                            <select id="f-${p.rowId}" class="form-select form-select-sm" onfocus="isTyping = true" onblur="isTyping = false" ${projetoAtivo.status === 'Encerrado' ? 'disabled' : ''}>
-                                <option value="OPERAÇÃO" ${p.funcao === 'OPERAÇÃO' ? 'selected' : ''}>OPERAÇÃO</option>
-                                <option value="FRIOS" ${p.funcao === 'FRIOS' ? 'selected' : ''}>FRIOS</option>
-                                <option value="AÉREOS" ${p.funcao === 'AÉREOS' ? 'selected' : ''}>AÉREOS</option>
-                                <option value="PONTO-EXTRA" ${p.funcao === 'PONTO-EXTRA' ? 'selected' : ''}>PONTO-EXTRA</option>
-                                <option value="SUPERVISÃO" ${p.funcao === 'SUPERVISÃO' ? 'selected' : ''}>SUPERVISÃO</option>
-                            </select>
-                        </td>
-                        <td>
-                            <input type="text" id="o-${p.rowId}" value="${p.obs || ''}" class="form-control form-control-sm" onfocus="isTyping = true" onblur="isTyping = false" ${projetoAtivo.status === 'Encerrado' ? 'readonly' : ''}>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-        } catch (e) {
-            console.error("Falha silenciosa de sincronia de lista.");
+  function encerrarProjeto() {
+    if(confirm('Atenção: Confirmar o encerramento da operação de hoje impossibilitará novas batidas de ponto. Deseja prosseguir?')) {
+      callBackend({ action: 'encerrarProjeto', project: projetoSelecionado }, (res) => {
+        if(res.success) {
+          mostrarMsg('Operação finalizada e salva com sucesso!', 'success');
+          setTimeout(() => location.reload(), 1500);
         }
+      });
     }
+  }
 
-    async function salvarAlteracoes() {
-        const btn = document.getElementById('btn-salvar-apenas');
-        btn.innerText = "Processando..."; btn.disabled = true; isTyping = false;
+  function salvarDespesa() {
+    let val = document.getElementById('valorDespesa').value;
+    if(!val) return mostrarMsg('Insira o valor do lançamento.', 'error');
+    
+    let inputArq = document.getElementById('arquivoDespesa');
+    let payload = {
+      action: 'salvarDespesaPainel', dadosGestor: dadosGlobaisGestor, projeto: projetoSelecionado,
+      tipo: document.getElementById('tipoDespesa').value, valor: val, obs: document.getElementById('obsDespesa').value
+    };
 
-        try {
-            let listaParaSalvar = [];
-            document.querySelectorAll('tbody#lista-presentes-sup tr').forEach(tr => {
-                const rowId = tr.getAttribute('data-rowid');
-                if (rowId) {
-                    listaParaSalvar.push({
-                        rowId: parseInt(rowId),
-                        funcao: document.getElementById('f-' + rowId).value,
-                        obs: document.getElementById('o-' + rowId).value
-                    });
-                }
-            });
+    if(inputArq.files.length > 0) {
+      let file = inputArq.files[0];
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        payload.comprovante = { base64: e.target.result.split(',')[1], nome: file.name, mime: file.type };
+        enviarDespesaProServidor(payload);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      enviarDespesaProServidor(payload);
+    }
+  }
 
-            await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'salvarApenas', lista: listaParaSalvar })
-            });
-            btn.innerText = "✓ Salvo com sucesso!";
-        } catch (e) {
-            alert("Erro nas alterações em tempo real.");
-        } finally {
-            setTimeout(() => { btn.innerText = "💾 Salvar Alterações"; btn.disabled = false; }, 2500);
+  function enviarDespesaProServidor(payload) {
+    mostrarMsg('Fazendo upload do comprovante...', 'success');
+    callBackend(payload, (res) => {
+      if(res.success) {
+        mostrarMsg('Lançamento de despesa armazenado com sucesso!', 'success');
+        document.getElementById('valorDespesa').value = "";
+        document.getElementById('obsDespesa').value = "";
+        document.getElementById('arquivoDespesa').value = "";
+      } else {
+        mostrarMsg(res.error, 'error');
+      }
+    });
+  }
+
+  // ====================================================================
+  // MODULOS DE CADASTRO E PIX (COLABORADOR)
+  // ====================================================================
+  function salvarNovoColaborador() {
+    let c = document.getElementById('cadCpf').value;
+    let n = document.getElementById('cadNome').value;
+    let p = document.getElementById('cadPix').value;
+    if(!c || !n || !p) return mostrarMsg('Todos os campos cadastrais são obrigatórios.', 'error');
+    
+    callBackend({action: 'cadastrarColaborador', dados: {cpf: c, nome: n, pix: p}}, (res) => {
+      if(res.success) {
+        mostrarMsg('Colaborador cadastrado com sucesso!', 'success');
+        document.getElementById('formCadastroColab').classList.add('hidden');
+        document.getElementById('cadCpf').value = "";
+        document.getElementById('cadNome').value = "";
+        document.getElementById('cadPix').value = "";
+      } else {
+        mostrarMsg(res.error, 'error');
+      }
+    });
+  }
+
+  function salvarEdicaoPix() {
+    let c = document.getElementById('altCpf').value;
+    let p = document.getElementById('altPix').value;
+    if(!c || !p) return mostrarMsg('Preencha o CPF e a Nova Chave informada.', 'error');
+    
+    callBackend({action: 'alterarPix', cpf: c, novaChave: p}, (res) => {
+      if(res.success) {
+        mostrarMsg('Chave Pix atualizada e sobrescrita na base!', 'success');
+        document.getElementById('formAlterarPix').classList.add('hidden');
+        document.getElementById('altCpf').value = "";
+        document.getElementById('altPix').value = "";
+      } else {
+        mostrarMsg(res.error, 'error');
+      }
+    });
+  }
+
+  // ====================================================================
+  // MÓDULO: RELATÓRIOS, HISTÓRICOS E CSV (SUPERVISOR / DIRETOR)
+  // ====================================================================
+  function mudarAbaDash(aba) {
+    document.getElementById('tabOperacao').classList.remove('active');
+    document.getElementById('tabRelatorios').classList.remove('active');
+    document.getElementById('abaOperacao').classList.add('hidden');
+    document.getElementById('abaRelatorios').classList.add('hidden');
+
+    if(aba === 'operacao') {
+      document.getElementById('tabOperacao').classList.add('active');
+      document.getElementById('abaOperacao').classList.remove('hidden');
+      if(projetoSelecionado) {
+        clearInterval(timerRefresh);
+        timerRefresh = setInterval(carregarEquipe, 10000);
+      }
+    } else {
+      document.getElementById('tabRelatorios').classList.add('active');
+      document.getElementById('abaRelatorios').classList.remove('hidden');
+      clearInterval(timerRefresh); // Paralisa o timer de background ao sair da tela operacional
+    }
+  }
+
+  function carregarProjetosEncerrados() {
+    callBackend({action: 'getProjetosEncerrados'}, (res) => {
+      if(res.success) {
+        let container = document.getElementById('listaEncerrados');
+        container.innerHTML = "";
+        if(res.lista.length === 0) {
+          container.innerHTML = "<p style='font-size:13px; color:#64748B;'>Nenhum projeto encerrado disponível.</p>";
+          return;
         }
-    }
-
-    async function encerrarProjeto() {
-        if (!confirm("⚠️ ATENÇÃO: Ao encerrar, este projeto travará novas entradas.\nContinuar?")) return;
-        const btn = document.getElementById('btn-encerrar');
-        btn.innerText = "Bloqueando..."; btn.disabled = true;
-
-        try {
-            await fetch(API_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: 'encerrarProjeto', project: projetoAtivo })
-            });
-            projetoAtivo.status = "Encerrado";
-            document.getElementById('info-status').innerText = "Encerrado";
-            clearInterval(loopSincronismo);
-            salvarAlteracoes();
-            carregarListaPresencas(false);
-        } catch (e) {
-            alert("Ocorreu uma instabilidade na gravação de encerramento.");
-            btn.disabled = false;
-        }
-    }
-
-    function exportarExcel() {
-        if (!dadosGlobaisParaExcel || dadosGlobaisParaExcel.length === 0) return alert("Vazio.");
-        const escapeCsv = (str) => !str ? '""' : '"' + String(str).replace(/"/g, '""').replace(/\n/g, " ") + '"';
-
-        let csv = [["Data", "Cliente", "Unidade", "CPF", "Nome Completo", "Função", "Observação"].join(";")];
-        dadosGlobaisParaExcel.forEach(p => {
-            let f = document.getElementById('f-' + p.rowId) ? document.getElementById('f-' + p.rowId).value : p.funcao;
-            let o = document.getElementById('o-' + p.rowId) ? document.getElementById('o-' + p.rowId).value : p.obs;
-            csv.push([escapeCsv(projetoAtivo.data), escapeCsv(projetoAtivo.cliente), escapeCsv(projetoAtivo.unidade), escapeCsv(p.cpf), escapeCsv(p.nome), escapeCsv(f), escapeCsv(o)].join(";"));
+        res.lista.forEach(p => {
+          container.innerHTML += `
+            <label style="display:block; margin-bottom:8px; cursor:pointer; font-size:14px;">
+              <input type="checkbox" class="chk-encerrado" data-json='${JSON.stringify(p)}' style="width:auto; margin-right:8px;"> 
+              <strong>${p.data}</strong> - ${p.cliente} (${p.unidade})
+            </label>
+          `;
         });
+      }
+    });
+  }
 
-        let blob = new Blob(["\ufeff" + csv.join("\n")], { type: "text/csv;charset=utf-8;" });
-        let link = document.createElement("a");
-        link.download = `Frequencia_${projetoAtivo.cliente}_${projetoAtivo.data.replace(/\//g, '-')}.csv`;
-        link.href = window.URL.createObjectURL(blob);
-        link.click();
-    }
+  function exportarCsvSelecionados() {
+    let checks = document.querySelectorAll('.chk-encerrado:checked');
+    if(checks.length === 0) return mostrarMsg('Selecione pelo menos uma operação arquivada.', 'error');
+    
+    let projs = Array.from(checks).map(c => JSON.parse(c.getAttribute('data-json')));
+    mostrarMsg('Gerando dados de exportação...', 'success');
+    
+    callBackend({action: 'exportarProjetosCsv', projetos: projs}, (res) => {
+      if(res.success) {
+        let blob = new Blob([res.csvData], { type: 'text/csv;charset=utf-8;' });
+        let url = URL.createObjectURL(blob);
+        let a = document.createElement("a");
+        a.href = url;
+        a.download = `Relatorio_Exportacao_Projetos_${new Date().getTime()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        mostrarMsg('Download da planilha .csv concluído!', 'success');
+      }
+    });
+  }
 
-    function copiarLink() {
-        const input = document.getElementById('link-ponto');
-        input.select();
-        document.execCommand('copy');
-        alert("Link copiado! Envie aos colaboradores.");
-    }
-
-    // ================= NOVO MÓDULO DE LANÇAMENTO DE DESPESAS OPERACIONAIS =================
-    async function salvarMóduloDespesa(acao) {
-        const projetoIdx = document.getElementById('sel-despesa-projeto').value;
-        const tipo = document.getElementById('sel-despesa-tipo').value;
-        const valor = document.getElementById('valor-despesa').value;
-        const obs = document.getElementById('obs-despesa').value;
-
-        if(!projetoIdx) return alert("Vincule um projeto a este lançamento.");
-        if(!tipo) return alert("Determine a classificação da despesa.");
-        if(!valor || valor === "R$ 0,00") return alert("Defina o valor da operação financeira.");
-
-        const projeto = projetosCache[projetoIdx];
-        
-        let btn = (acao === 'nova') ? document.getElementById('btn-nova-despesa') : document.getElementById('btn-finalizar-despesa');
-        const originalTxt = btn.innerText;
-        btn.innerText = "Gravando Lançamento..."; btn.disabled = true;
-
-        // Payload estruturado enviando metadados do gestor, do projeto e o anexo/print convertido em base64
-        const payload = {
-            action: 'salvarDespesaPainel',
-            dadosGestor: dadosUsuario,
-            projeto: projeto,
-            tipo: tipo,
-            valor: valor,
-            obs: obs,
-            comprovante: {
-                base64: comprovanteB64,
-                mime: comprovanteMime,
-                nome: comprovanteNome
-            }
-        };
-
-        try {
-            const response = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
-            const res = await response.json();
-
-            if(res.success) {
-                alert("Despesa e comprovante processados com sucesso na Planilha!");
-                
-                // Reseta os campos de despesa para permitir nova rodada limpa
-                document.getElementById('sel-despesa-tipo').value = '';
-                document.getElementById('valor-despesa').value = '';
-                document.getElementById('obs-despesa').value = '';
-                document.getElementById('file-comprovante').value = '';
-                document.getElementById('preview-container').classList.add('hidden');
-                comprovanteB64 = null; comprovanteMime = null; comprovanteNome = null;
-
-                if(acao === 'finalizar') {
-                    document.getElementById('sel-despesa-projeto').value = '';
-                    // Alterna automaticamente a aba para a visão principal de monitoramento
-                    const firstTab = new bootstrap.Tab(document.getElementById('projetos-tab'));
-                    firstTab.show();
-                }
-            } else {
-                alert(res.error || "Ocorreu um erro interno de validação ao salvar.");
-            }
-        } catch(err) {
-            alert("Erro técnico de rede ao persistir os dados da despesa.");
-        } finally {
-            btn.innerText = originalTxt; btn.disabled = false;
+  function pesquisarHistoricoColab() {
+    let t = document.getElementById('pesqTermo').value;
+    let d1 = document.getElementById('pesqDataIni').value;
+    let d2 = document.getElementById('pesqDataFim').value;
+    
+    document.getElementById('tbodyPesquisa').innerHTML = "<tr><td colspan='5'>Filtrando base histórica...</td></tr>";
+    
+    callBackend({action: 'pesquisarColaborador', termo: t, dataIni: d1, dataFim: d2}, (res) => {
+      if(res.success) {
+        let tb = document.getElementById('tbodyPesquisa');
+        tb.innerHTML = "";
+        if(res.lista.length === 0) {
+          tb.innerHTML = "<tr><td colspan='5'>Nenhum registro de participação localizado com os filtros aplicados.</td></tr>";
+          return;
         }
-    }
+        res.lista.forEach(i => {
+          tb.innerHTML += `<tr>
+            <td>${i.data}</td>
+            <td><strong>${i.nome}</strong></td>
+            <td>${i.cliente} (${i.unidade})</td>
+            <td><span style="background:#E2E8F0; padding:3px 8px; border-radius:4px; font-size:12px; font-weight:600;">${i.funcao}</span></td>
+            <td>${i.obs || '-'}</td>
+          </tr>`;
+        });
+      }
+    });
+  }
 </script>
 </body>
 </html>
