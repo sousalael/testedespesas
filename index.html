@@ -68,8 +68,10 @@
     
     <div id="view-login">
         <h4 class="mb-3 text-primary fw-bold">Acesso Gestão</h4>
-        <label class="form-label fw-bold">Selecione o Projeto Ativo de Hoje:</label>
-        <select id="sel-proj" class="form-select mb-3">
+        <!-- ALTERADO (autorizado): a selecao de projeto saiu da tela de login e foi para o painel.
+             O <select> original permanece aqui, apenas OCULTO, para que a funcao entrar()
+             e o window.onload do Folha de Ponto continuem funcionando exatamente como antes. -->
+        <select id="sel-proj" class="form-select mb-3 hidden">
             <option value="">-- Selecione o Projeto --</option>
         </select>
         
@@ -104,17 +106,21 @@
             </div>
         </div>
 
-        <!-- ############ NOVO: HISTÓRICO DE PROJETOS ENCERRADOS ############ -->
+        <!-- ############ NOVO: SELEÇÃO DE PROJETO (saiu da tela de login) ############ -->
         <div class="card mb-4 border-0 shadow-sm" style="background-color: #f4f4fb;">
             <div class="card-body">
-                <label class="fw-bold mb-2 text-primary">🗂️ Histórico: consultar Projeto Encerrado</label>
+                <label class="form-label fw-bold text-primary mb-1">Projeto Ativo de Hoje:</label>
+                <select id="sel-proj-ativos-sup" class="form-select mb-3" onchange="selecionarProjetoAtivoSup()">
+                    <option value="">-- Carregando projetos de hoje... --</option>
+                </select>
+
+                <label class="form-label fw-bold text-primary mb-1">🗂️ Ou consulte um Projeto Encerrado:</label>
                 <div class="input-group">
                     <select id="sel-proj-encerrados-sup" class="form-select" onchange="carregarProjetoEncerradoSup()">
                         <option value="">-- Clique em Carregar Histórico --</option>
                     </select>
                     <button class="btn btn-primary fw-bold" id="btn-carregar-encerrados" onclick="carregarListaEncerradosSup()">Carregar Histórico</button>
                 </div>
-                <small class="text-muted">Selecione um projeto encerrado para ver a equipe, as despesas e gerar os relatórios.</small>
             </div>
         </div>
         <!-- ############ FIM DO BLOCO NOVO ############ -->
@@ -126,6 +132,34 @@
             <p class="mb-0"><strong>Projeto:</strong> <span id="span-projeto"></span></p>
             <span id="badge-status" class="badge bg-success mt-2 px-3 py-2">Ativo</span>
         </div>
+
+        <!-- ############ NOVO: ABAS FOLHA DE PONTO / DESPESAS ############ -->
+        <ul class="nav nav-tabs mb-4" id="abas-painel">
+            <li class="nav-item">
+                <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-ponto" type="button">🕒 Folha de Ponto</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-despesas" type="button">💰 Despesas</button>
+            </li>
+        </ul>
+
+        <div class="tab-content">
+        <div class="tab-pane fade show active" id="tab-ponto">
+        <!-- ############ (conteúdo original da Folha de Ponto, intacto) ############ -->
+
+        <!-- ############ NOVO: REGISTRO DE PRESENÇA DO GESTOR ############ -->
+        <div id="bloco-presenca-gestor" class="hidden mb-4">
+            <div class="alert alert-warning mb-0" id="aviso-presenca-pendente">
+                <div class="fw-bold mb-2">✋ Registre a sua presença neste projeto</div>
+                <div class="small mb-3">O link para os colaboradores baterem o ponto só é liberado depois que você registrar a sua presença.</div>
+                <button class="btn btn-primary w-100 py-2 fw-bold" id="btn-registrar-presenca-gestor" onclick="registrarPresencaGestor()">✅ Registrar minha presença e liberar o link</button>
+            </div>
+            <div class="alert alert-success mb-0 hidden" id="aviso-presenca-ok">
+                <span class="fw-bold">✓ Sua presença está registrada neste projeto.</span>
+                <span class="small d-block text-muted">O link abaixo já pode ser enviado aos colaboradores.</span>
+            </div>
+        </div>
+        <!-- ############ FIM DO BLOCO NOVO ############ -->
 
         <div class="card mb-4 bg-light border-0 shadow-sm" id="card-link">
             <div class="card-body">
@@ -160,9 +194,12 @@
             <button class="btn btn-danger w-100 py-2" id="btn-encerrar" onclick="encerrarProjeto()">🔒 Encerrar Projeto</button>
             <button class="btn btn-secondary w-100 py-2" onclick="exportarExcel()">📊 Gerar Relatório Excel (Deste Projeto)</button>
         </div>
+        <!-- ############ (fim do conteúdo original da Folha de Ponto) ############ -->
+        </div>
 
-        <!-- ############ NOVO: MÓDULO DE DESPESAS DO PROJETO ############ -->
-        <hr class="my-4">
+        <!-- ############ NOVO: ABA DE DESPESAS ############ -->
+        <div class="tab-pane fade" id="tab-despesas">
+
         <h6 class="fw-bold text-primary d-flex align-items-center mb-3 flex-wrap">
             Despesas do Projeto:
             <span id="contador-despesas" class="badge bg-primary ms-2 rounded-pill shadow-sm" style="font-size: 0.95rem;">0</span>
@@ -228,13 +265,16 @@
                     </tr>
                 </thead>
                 <tbody id="lista-despesas">
-                    <tr><td colspan="5" class="text-center text-muted">Nenhuma despesa lançada.</td></tr>
+                    <tr><td colspan="5" class="text-center text-muted">Selecione um projeto para ver as despesas.</td></tr>
                 </tbody>
             </table>
         </div>
 
         <button class="btn btn-secondary w-100 py-2 mt-3" onclick="exportarDespesasExcel()">📊 Gerar Relatório Excel (Despesas deste Projeto)</button>
-        <!-- ############ FIM DO BLOCO NOVO ############ -->
+
+        </div>
+        </div>
+        <!-- ############ FIM DAS ABAS ############ -->
     </div>
 
     <div id="view-colaborador" class="hidden text-center">
@@ -853,6 +893,7 @@
     let tiposDespesaCarregados = false;
     let chaveProjetoAnterior = '';
     let sessaoEncerradaAtual = false;
+    let presencaGestorOk = false;
 
     function chaveProjeto(p) {
         if (!p || !p.data) return '';
@@ -1188,13 +1229,124 @@
     function carregarProjetoEncerradoSup() {
         const val = document.getElementById('sel-proj-encerrados-sup').value;
         if (!val) return;
+        document.getElementById('sel-proj-ativos-sup').value = '';
         try {
             projetoAtivo = JSON.parse(val);
             if (loopAtualizacao) clearInterval(loopAtualizacao);
             atualizarCabecalhoProjeto();
             carregarLista(false);
+            verificarPresencaGestor();
             carregarDespesas();
         } catch (e) { alert('Erro ao carregar o projeto encerrado selecionado.'); }
+    }
+
+    // ---------- Projetos ativos de hoje (a seleção saiu da tela de login) ----------
+    // Reaproveita a lista que o Folha de Ponto já carrega no <select> original (oculto).
+    function popularProjetosAtivosSup() {
+        const origem = document.getElementById('sel-proj');
+        const destino = document.getElementById('sel-proj-ativos-sup');
+        if (!origem || !destino) return;
+        if (destino.options.length > 1) return;
+        if (origem.options.length <= 1) {
+            destino.innerHTML = '<option value="">-- Nenhum projeto ativo hoje --</option>';
+            return;
+        }
+        destino.innerHTML = '';
+        for (let i = 0; i < origem.options.length; i++) {
+            const o = document.createElement('option');
+            o.value = origem.options[i].value;
+            o.text = (i === 0) ? '-- Selecione o Projeto de Hoje --' : origem.options[i].text;
+            destino.appendChild(o);
+        }
+    }
+
+    async function selecionarProjetoAtivoSup() {
+        const val = document.getElementById('sel-proj-ativos-sup').value;
+        if (!val) return;
+        document.getElementById('sel-proj-encerrados-sup').value = '';
+        try {
+            projetoAtivo = JSON.parse(val);
+        } catch (e) { return alert('Erro ao interpretar os dados do projeto.'); }
+
+        atualizarCabecalhoProjeto();
+        carregarLista(false);
+        if (loopAtualizacao) clearInterval(loopAtualizacao);
+        if (projetoAtivo.status !== 'Encerrado') { loopAtualizacao = setInterval(() => carregarLista(false), 5000); }
+        verificarPresencaGestor();
+        carregarDespesas();
+    }
+
+    // ---------- Presença do gestor: agora é um ato do próprio supervisor ----------
+    function soDigitos(v) { return String(v || '').replace(/\D/g, ''); }
+
+    // Confere na lista de presenças do projeto se o gestor logado já está registrado.
+    async function verificarPresencaGestor() {
+        if (!projetoAtivo || !projetoAtivo.data) { presencaGestorOk = false; aplicarEstadoPresenca(); return; }
+        const cpf = soDigitos(getCpfLogado());
+        if (cpf.length !== 11) { presencaGestorOk = false; aplicarEstadoPresenca(); return; }
+        try {
+            const response = await fetch(API_URL, { method:'POST', body: JSON.stringify({action:'getListaPresencas', projeto: projetoAtivo}) });
+            const res = await response.json();
+            presencaGestorOk = !!(res && res.lista && res.lista.some(p => soDigitos(p.cpf) === cpf));
+        } catch (e) {
+            presencaGestorOk = false;
+        }
+        aplicarEstadoPresenca();
+    }
+
+    // Registra a presença chamando a MESMA função original do Folha de Ponto.
+    async function registrarPresencaGestor() {
+        if (!projetoAtivo || !projetoAtivo.data) return alert('Selecione um projeto antes de registrar sua presença.');
+
+        const btn = document.getElementById('btn-registrar-presenca-gestor');
+        const txtOriginal = btn.innerText;
+        btn.innerText = 'Registrando...'; btn.disabled = true;
+
+        try {
+            const response = await fetch(API_URL, { method:'POST', body: JSON.stringify({
+                action: 'verificarSupervisor', cpf: getCpfLogado(), projeto: projetoAtivo
+            })});
+            const res = await response.json();
+
+            if (!res || !res.encontrado) {
+                alert('⚠️ Não foi possível registrar sua presença.\n\nSeu CPF não foi reconhecido como Supervisor ou Diretor.');
+                return;
+            }
+
+            presencaGestorOk = true;
+            atualizarCabecalhoProjeto();
+            aplicarEstadoPresenca();
+            carregarLista(false);
+        } catch (err) {
+            alert('Erro de rede ao registrar sua presença: ' + err.message);
+        } finally {
+            btn.innerText = txtOriginal; btn.disabled = false;
+        }
+    }
+
+    // O link dos colaboradores só aparece depois que o gestor registra a presença.
+    function aplicarEstadoPresenca() {
+        const bloco = document.getElementById('bloco-presenca-gestor');
+        const pendente = document.getElementById('aviso-presenca-pendente');
+        const ok = document.getElementById('aviso-presenca-ok');
+        const link = document.getElementById('card-link');
+        if (!bloco || !link) return;
+
+        const temProjeto = !!(projetoAtivo && projetoAtivo.data);
+        const encerrado = temProjeto && projetoAtivo.status === 'Encerrado';
+
+        if (!temProjeto || encerrado) { bloco.classList.add('hidden'); return; }
+
+        bloco.classList.remove('hidden');
+        if (presencaGestorOk) {
+            pendente.classList.add('hidden');
+            ok.classList.remove('hidden');
+            link.classList.remove('hidden');
+        } else {
+            pendente.classList.remove('hidden');
+            ok.classList.add('hidden');
+            link.classList.add('hidden');
+        }
     }
 
     // ---------- Inicialização independente (não interfere no Folha de Ponto) ----------
@@ -1228,11 +1380,15 @@
             const dash = document.getElementById('view-dashboard');
             if (!dash || dash.classList.contains('hidden')) return;
             carregarTiposDespesa();
+            popularProjetosAtivosSup();
             const chave = chaveProjeto(projetoAtivo);
             if (chave !== chaveProjetoAnterior) {
                 chaveProjetoAnterior = chave;
+                presencaGestorOk = false;
+                verificarPresencaGestor();
                 carregarDespesas();
             }
+            aplicarEstadoPresenca();
         }, 2000);
     });
 </script>
