@@ -82,30 +82,6 @@
 
     <div id="view-dashboard" class="hidden">
         
-        <div id="area-diretor" class="alert alert-dark hidden mb-4 border-dark">
-            <h6 class="fw-bold text-dark mb-3">👑 Ferramentas da Diretoria</h6>
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label text-sm mb-1 fw-bold">Ver Projeto Ativo (Hoje):</label>
-                    <select id="sel-proj-diretor-ativos" class="form-select border-dark" onchange="carregarProjetoDiretor('ativo')">
-                        <option value="">-- Selecionar --</option>
-                    </select>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label text-sm mb-1 fw-bold">Ver Projeto Encerrado:</label>
-                    <select id="sel-proj-diretor-encerrados" class="form-select border-dark" onchange="carregarProjetoDiretor('encerrado')">
-                        <option value="">-- Selecionar --</option>
-                    </select>
-                </div>
-            </div>
-            
-            <hr class="border-secondary">
-            <div class="d-flex flex-column flex-md-row gap-2 mt-2">
-                <button class="btn btn-outline-dark btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalMultiRelatorio" onclick="popularModalMulti()">📑 Relatório Múltiplo Unificado</button>
-                <button class="btn btn-outline-dark btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalBuscaColab">🔍 Pesquisar Colaborador</button>
-            </div>
-        </div>
-
         <!-- ############ NOVO: SELEÇÃO DE PROJETO (saiu da tela de login) ############ -->
         <div class="card mb-4 border-0 shadow-sm" style="background-color: #f4f4fb;">
             <div class="card-body">
@@ -194,6 +170,30 @@
             <button class="btn btn-danger w-100 py-2" id="btn-encerrar" onclick="encerrarProjeto()">🔒 Encerrar Projeto</button>
             <button class="btn btn-secondary w-100 py-2" onclick="exportarExcel()">📊 Gerar Relatório Excel (Deste Projeto)</button>
         </div>
+
+        <div id="area-diretor" class="alert alert-dark hidden mb-4 border-dark">
+            <h6 class="fw-bold text-dark mb-3">👑 Ferramentas da Diretoria</h6>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label text-sm mb-1 fw-bold">Ver Projeto Ativo (Hoje):</label>
+                    <select id="sel-proj-diretor-ativos" class="form-select border-dark" onchange="carregarProjetoDiretor('ativo')">
+                        <option value="">-- Selecionar --</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label text-sm mb-1 fw-bold">Ver Projeto Encerrado:</label>
+                    <select id="sel-proj-diretor-encerrados" class="form-select border-dark" onchange="carregarProjetoDiretor('encerrado')">
+                        <option value="">-- Selecionar --</option>
+                    </select>
+                </div>
+            </div>
+            
+            <hr class="border-secondary">
+            <div class="d-flex flex-column flex-md-row gap-2 mt-2">
+                <button class="btn btn-outline-dark btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalMultiRelatorio" onclick="popularModalMulti()">📑 Relatório Múltiplo Unificado</button>
+                <button class="btn btn-outline-dark btn-sm w-100 fw-bold" data-bs-toggle="modal" data-bs-target="#modalBuscaColab">🔍 Pesquisar Colaborador</button>
+            </div>
+        </div>
         <!-- ############ (fim do conteúdo original da Folha de Ponto) ############ -->
         </div>
 
@@ -271,6 +271,14 @@
         </div>
 
         <button class="btn btn-secondary w-100 py-2 mt-3" onclick="exportarDespesasExcel()">📊 Gerar Relatório Excel (Despesas deste Projeto)</button>
+
+        <hr class="my-4">
+        <h6 class="fw-bold text-primary mb-3">Relatórios e Análise</h6>
+        <div class="d-flex flex-column flex-md-row gap-2">
+            <button class="btn btn-outline-primary w-100 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#modalRelDespesas" onclick="prepararRelDespesas()">📑 Relatório de Despesas</button>
+            <button class="btn btn-outline-primary w-100 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#modalBiDespesas" onclick="prepararBiDespesas()">📊 BI de Despesas</button>
+        </div>
+        <div class="small text-muted mt-2" id="aviso-escopo-despesas"></div>
 
         </div>
         </div>
@@ -402,13 +410,108 @@
   </div>
 </div>
 
+<!-- ############ NOVO: MODAL RELATÓRIO DE DESPESAS ############ -->
+<div class="modal fade" id="modalRelDespesas" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header text-white" style="background-color: var(--fc-primaria);">
+        <h5 class="modal-title fw-bold">Relatório de Despesas</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2 mb-3 border p-3 rounded bg-light mx-0 shadow-sm">
+          <div class="col-6">
+            <label class="form-label text-sm fw-bold text-primary">Data Inicial:</label>
+            <input type="date" id="rel-desp-ini" class="form-control form-control-sm">
+          </div>
+          <div class="col-6">
+            <label class="form-label text-sm fw-bold text-primary">Data Final:</label>
+            <input type="date" id="rel-desp-fim" class="form-control form-control-sm">
+          </div>
+          <div class="col-12 mt-3">
+            <button class="btn btn-primary btn-sm w-100 fw-bold py-2" id="btn-buscar-rel-desp" onclick="buscarRelDespesas()">🔍 Buscar Despesas do Período</button>
+          </div>
+        </div>
+
+        <div id="rel-desp-resultado" class="hidden">
+          <label class="form-label fw-bold text-primary mb-2">Projetos encontrados — desmarque os que não quer no relatório:</label>
+          <div id="rel-desp-projetos" class="border p-2 mb-3 rounded bg-light" style="max-height: 220px; overflow-y: auto;"></div>
+          <div class="d-flex gap-2 mb-3">
+            <button class="btn btn-sm btn-secondary w-50" onclick="marcarTodosRelDesp(true)">Marcar Todos</button>
+            <button class="btn btn-sm btn-outline-secondary w-50" onclick="marcarTodosRelDesp(false)">Desmarcar</button>
+          </div>
+          <div class="alert alert-success d-flex align-items-center mb-3">
+            <span class="fw-bold" id="rel-desp-resumo">0 lançamentos</span>
+            <span class="ms-auto fw-bold" id="rel-desp-total">R$ 0,00</span>
+          </div>
+          <button class="btn btn-primary w-100 py-2 fw-bold" onclick="exportarRelDespesas()">📊 Exportar Relatório em Excel (.csv)</button>
+        </div>
+
+        <div id="rel-desp-vazio" class="text-center text-muted py-3">Escolha o período e clique em Buscar.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ############ NOVO: MODAL BI DE DESPESAS ############ -->
+<div class="modal fade" id="modalBiDespesas" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header text-white" style="background-color: var(--fc-primaria);">
+        <h5 class="modal-title fw-bold">BI de Despesas</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-2 mb-3 border p-3 rounded bg-light mx-0 shadow-sm">
+          <div class="col-6">
+            <label class="form-label text-sm fw-bold text-primary">Data Inicial:</label>
+            <input type="date" id="bi-desp-ini" class="form-control form-control-sm">
+          </div>
+          <div class="col-6">
+            <label class="form-label text-sm fw-bold text-primary">Data Final:</label>
+            <input type="date" id="bi-desp-fim" class="form-control form-control-sm">
+          </div>
+          <div class="col-12 mt-3">
+            <button class="btn btn-primary btn-sm w-100 fw-bold py-2" id="btn-buscar-bi-desp" onclick="buscarBiDespesas()">🔍 Carregar Dados do Período</button>
+          </div>
+        </div>
+
+        <div id="bi-desp-resultado" class="hidden">
+          <div class="d-flex flex-wrap gap-2 mb-3">
+            <button class="btn btn-sm btn-primary fw-bold" id="bi-dim-projeto" onclick="mudarDimensaoBi('projeto')">Por Projeto</button>
+            <button class="btn btn-sm btn-outline-secondary fw-bold" id="bi-dim-grupo" onclick="mudarDimensaoBi('grupo')">Por Grupo</button>
+            <button class="btn btn-sm btn-outline-secondary fw-bold hidden" id="bi-dim-supervisor" onclick="mudarDimensaoBi('supervisor')">Por Supervisor</button>
+          </div>
+
+          <div id="bi-trilha" class="d-flex flex-wrap align-items-center gap-1 mb-2 p-2 rounded bg-light small"></div>
+          <div class="small text-muted mb-2" id="bi-dica">Clique na linha para descer um nível. Use a trilha acima para subir.</div>
+
+          <div id="bi-linhas" class="border rounded p-2 mb-3" style="max-height: 320px; overflow-y: auto;"></div>
+
+          <div class="alert alert-success d-flex align-items-center mb-3">
+            <span class="fw-bold" id="bi-resumo">0 lançamentos</span>
+            <span class="ms-auto fw-bold" id="bi-total">R$ 0,00</span>
+          </div>
+
+          <div class="d-flex flex-column flex-md-row gap-2">
+            <button class="btn btn-secondary w-100 py-2 fw-bold" onclick="exportarBiVisao()">📊 Exportar Esta Visão</button>
+            <button class="btn btn-outline-secondary w-100 py-2 fw-bold" onclick="exportarBiLancamentos()">📄 Exportar Lançamentos</button>
+          </div>
+        </div>
+
+        <div id="bi-desp-vazio" class="text-center text-muted py-3">Escolha o período e clique em Carregar.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
     // =========================================================================
     // ⚠️ ATENÇÃO: SUBSTITUA O TEXTO ABAIXO PELO LINK DO SEU DEPLOY DO APPS SCRIPT
     // =========================================================================
-    const API_URL = 'https://script.google.com/macros/s/AKfycbx-baNpx-rLVyu0vUxYuUXYUB4Y2SpZbnZvnGGv_AzVBTf0m0CHi0IUwrk5iOWUeYWP/exec'; 
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyu4oPWvwRFtttfGxACbQbP-ONTSt8x-RpBR0dx6DA02UNBIdCcu_It1HscrZTo_kCO/exec'; 
     
     let projetoAtivo = null;
     let dadosGlobaisParaExcel = []; 
@@ -1349,6 +1452,315 @@
         }
     }
 
+    // ============================================================
+    // RELATÓRIO DE DESPESAS E BI
+    // O alcance dos dados é definido no servidor pelo CPF:
+    // diretoria vê tudo, supervisor vê apenas o que ele lançou.
+    // ============================================================
+    let relDespDados = [];
+    let biDados = [];
+    let biEstado = { dimensao: 'projeto', caminho: [] };
+
+    const BI_HIER = {
+        projeto:    [ { campo: 'projetoLabel', rotulo: 'Projeto' }, { campo: 'grupo', rotulo: 'Grupo' }, { campo: 'tipo', rotulo: 'Tipo' } ],
+        grupo:      [ { campo: 'grupo', rotulo: 'Grupo' }, { campo: 'tipo', rotulo: 'Tipo' }, { campo: 'projetoLabel', rotulo: 'Projeto' } ],
+        supervisor: [ { campo: 'supervisor', rotulo: 'Supervisor' }, { campo: 'projetoLabel', rotulo: 'Projeto' }, { campo: 'grupo', rotulo: 'Grupo' } ]
+    };
+
+    function primeiroDiaMesISO() {
+        const h = new Date();
+        return h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0') + '-01';
+    }
+    function hojeISO() {
+        const h = new Date();
+        return h.getFullYear() + '-' + String(h.getMonth() + 1).padStart(2, '0') + '-' + String(h.getDate()).padStart(2, '0');
+    }
+    function escaparHtml(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    const escapeCsvDesp = (str) => { if (str === null || str === undefined) return '""'; return '"' + String(str).replace(/"/g, '""').replace(/(\r\n|\n|\r)/gm, ' - ') + '"'; };
+
+    function baixarCsv(linhas, nomeArquivo) {
+        const arquivo = new Blob(["\ufeff" + linhas.join("\n")], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.download = nomeArquivo;
+        link.href = window.URL.createObjectURL(arquivo);
+        link.click();
+    }
+
+    async function buscarDespesasPeriodo(dataIni, dataFim) {
+        const response = await fetch(API_URL, { method:'POST', body: JSON.stringify({
+            action: 'getDespesasRelatorio', cpf: getCpfLogado(), filtros: { dataIni: dataIni, dataFim: dataFim }
+        })});
+        const res = await response.json();
+        if (!res || res.error) throw new Error((res && res.error) ? res.error : 'Resposta inesperada do servidor.');
+        (res.lista || []).forEach(d => { d.projetoLabel = d.data + ' - ' + d.cliente + ' - ' + d.unidade; });
+        return res.lista || [];
+    }
+
+    function atualizarAvisoEscopo() {
+        const el = document.getElementById('aviso-escopo-despesas');
+        if (!el) return;
+        el.innerText = (getPerfilLogado() === 'DIRETOR')
+            ? 'Como Diretoria, você enxerga as despesas de todos os supervisores.'
+            : 'Você enxerga somente as despesas lançadas por você.';
+    }
+
+    // ---------- Relatório de Despesas ----------
+    function prepararRelDespesas() {
+        if (!document.getElementById('rel-desp-ini').value) document.getElementById('rel-desp-ini').value = primeiroDiaMesISO();
+        if (!document.getElementById('rel-desp-fim').value) document.getElementById('rel-desp-fim').value = hojeISO();
+    }
+
+    async function buscarRelDespesas() {
+        const ini = document.getElementById('rel-desp-ini').value;
+        const fim = document.getElementById('rel-desp-fim').value;
+        if (!ini || !fim) return alert('Preencha a Data Inicial e a Data Final.');
+
+        const btn = document.getElementById('btn-buscar-rel-desp');
+        btn.innerText = 'Buscando...'; btn.disabled = true;
+        try {
+            relDespDados = await buscarDespesasPeriodo(ini, fim);
+            const proj = {};
+            relDespDados.forEach(d => { proj[d.projetoLabel] = true; });
+            const nomes = Object.keys(proj).sort();
+
+            if (nomes.length === 0) {
+                document.getElementById('rel-desp-resultado').classList.add('hidden');
+                document.getElementById('rel-desp-vazio').classList.remove('hidden');
+                document.getElementById('rel-desp-vazio').innerText = 'Nenhuma despesa encontrada neste período.';
+                return;
+            }
+
+            document.getElementById('rel-desp-projetos').innerHTML = nomes.map((n, i) => `
+                <div class="form-check border-bottom pb-1 mb-1">
+                    <input class="form-check-input chk-rel-desp" type="checkbox" checked value="${escaparHtml(n)}" id="chk-rel-desp-${i}" onchange="resumirRelDespesas()">
+                    <label class="form-check-label w-100" for="chk-rel-desp-${i}" style="cursor:pointer;">${escaparHtml(n)}</label>
+                </div>`).join('');
+
+            document.getElementById('rel-desp-vazio').classList.add('hidden');
+            document.getElementById('rel-desp-resultado').classList.remove('hidden');
+            resumirRelDespesas();
+        } catch (err) {
+            alert('Erro ao buscar as despesas: ' + err.message);
+        } finally {
+            btn.innerText = '🔍 Buscar Despesas do Período'; btn.disabled = false;
+        }
+    }
+
+    function marcarTodosRelDesp(marcar) {
+        document.querySelectorAll('.chk-rel-desp').forEach(el => el.checked = marcar);
+        resumirRelDespesas();
+    }
+
+    function relDespSelecionadas() {
+        const marcados = {};
+        document.querySelectorAll('.chk-rel-desp:checked').forEach(el => marcados[el.value] = true);
+        return relDespDados.filter(d => marcados[d.projetoLabel]);
+    }
+
+    function resumirRelDespesas() {
+        const sel = relDespSelecionadas();
+        let total = 0;
+        sel.forEach(d => total += Number(d.valor || 0));
+        document.getElementById('rel-desp-resumo').innerText = sel.length + (sel.length === 1 ? ' lançamento' : ' lançamentos');
+        document.getElementById('rel-desp-total').innerText = formatarReal(total);
+    }
+
+    function exportarRelDespesas() {
+        const sel = relDespSelecionadas();
+        if (!sel.length) return alert('Selecione ao menos um projeto para exportar.');
+        baixarCsv(linhasCsvLancamentos(sel), 'Relatorio_Despesas_' + document.getElementById('rel-desp-ini').value + '_a_' + document.getElementById('rel-desp-fim').value + '.csv');
+    }
+
+    function linhasCsvLancamentos(lista) {
+        let total = 0;
+        let csv = [["Timestamp", "Data Projeto", "Cliente", "Unidade", "Grupo", "Tipo Despesa", "Valor", "Observação", "Supervisor", "URL Comprovante"].join(";")];
+        lista.forEach(d => {
+            total += Number(d.valor || 0);
+            csv.push([escapeCsvDesp(d.timestamp), escapeCsvDesp(d.data), escapeCsvDesp(d.cliente), escapeCsvDesp(d.unidade),
+                      escapeCsvDesp(d.grupo), escapeCsvDesp(d.tipo), escapeCsvDesp(Number(d.valor||0).toFixed(2).replace('.', ',')),
+                      escapeCsvDesp(d.obs), escapeCsvDesp(d.supervisor), escapeCsvDesp(d.url)].join(";"));
+        });
+        csv.push(["", "", "", "", "", escapeCsvDesp("TOTAL"), escapeCsvDesp(total.toFixed(2).replace('.', ',')), "", "", ""].join(";"));
+        return csv;
+    }
+
+    // ---------- BI de Despesas ----------
+    function prepararBiDespesas() {
+        if (!document.getElementById('bi-desp-ini').value) document.getElementById('bi-desp-ini').value = primeiroDiaMesISO();
+        if (!document.getElementById('bi-desp-fim').value) document.getElementById('bi-desp-fim').value = hojeISO();
+        document.getElementById('bi-dim-supervisor').classList.toggle('hidden', getPerfilLogado() !== 'DIRETOR');
+    }
+
+    async function buscarBiDespesas() {
+        const ini = document.getElementById('bi-desp-ini').value;
+        const fim = document.getElementById('bi-desp-fim').value;
+        if (!ini || !fim) return alert('Preencha a Data Inicial e a Data Final.');
+
+        const btn = document.getElementById('btn-buscar-bi-desp');
+        btn.innerText = 'Carregando...'; btn.disabled = true;
+        try {
+            biDados = await buscarDespesasPeriodo(ini, fim);
+            if (!biDados.length) {
+                document.getElementById('bi-desp-resultado').classList.add('hidden');
+                document.getElementById('bi-desp-vazio').classList.remove('hidden');
+                document.getElementById('bi-desp-vazio').innerText = 'Nenhuma despesa encontrada neste período.';
+                return;
+            }
+            biEstado = { dimensao: 'projeto', caminho: [] };
+            document.getElementById('bi-desp-vazio').classList.add('hidden');
+            document.getElementById('bi-desp-resultado').classList.remove('hidden');
+            mudarDimensaoBi('projeto');
+        } catch (err) {
+            alert('Erro ao carregar o BI: ' + err.message);
+        } finally {
+            btn.innerText = '🔍 Carregar Dados do Período'; btn.disabled = false;
+        }
+    }
+
+    function mudarDimensaoBi(dim) {
+        biEstado.dimensao = dim;
+        biEstado.caminho = [];
+        ['projeto', 'grupo', 'supervisor'].forEach(d => {
+            const b = document.getElementById('bi-dim-' + d);
+            if (!b) return;
+            b.classList.toggle('btn-primary', d === dim);
+            b.classList.toggle('btn-outline-secondary', d !== dim);
+        });
+        renderBi();
+    }
+
+    function biFiltrados() {
+        return biDados.filter(d => biEstado.caminho.every(p => String(d[p.campo]) === p.valor));
+    }
+
+    function biDrill(valor) {
+        const hier = BI_HIER[biEstado.dimensao];
+        const nivel = biEstado.caminho.length;
+        if (nivel >= hier.length) return;
+        biEstado.caminho.push({ campo: hier[nivel].campo, valor: String(valor) });
+        renderBi();
+    }
+
+    function biSubir(indice) {
+        biEstado.caminho = biEstado.caminho.slice(0, indice);
+        renderBi();
+    }
+
+    function renderBiTrilha() {
+        const hier = BI_HIER[biEstado.dimensao];
+        let html = '<a href="javascript:void(0)" onclick="biSubir(0)" class="fw-bold text-decoration-none">Todos</a>';
+        biEstado.caminho.forEach((p, i) => {
+            const ultimo = (i === biEstado.caminho.length - 1);
+            html += ' <span class="text-muted">›</span> ';
+            html += ultimo
+                ? '<span class="fw-bold">' + escaparHtml(p.valor) + '</span>'
+                : '<a href="javascript:void(0)" onclick="biSubir(' + (i + 1) + ')" class="text-decoration-none">' + escaparHtml(p.valor) + '</a>';
+        });
+        html += '<span class="ms-auto text-muted">nível ' + (biEstado.caminho.length + 1) + ' de ' + (hier.length + 1) + '</span>';
+        document.getElementById('bi-trilha').innerHTML = html;
+    }
+
+    function renderBi() {
+        renderBiTrilha();
+        const hier = BI_HIER[biEstado.dimensao];
+        const nivel = biEstado.caminho.length;
+        const dados = biFiltrados();
+        const cont = document.getElementById('bi-linhas');
+
+        let total = 0;
+        dados.forEach(d => total += Number(d.valor || 0));
+        document.getElementById('bi-resumo').innerText = dados.length + (dados.length === 1 ? ' lançamento' : ' lançamentos');
+        document.getElementById('bi-total').innerText = formatarReal(total);
+
+        if (nivel >= hier.length) {
+            document.getElementById('bi-dica').innerText = 'Último nível: lançamentos individuais. Use a trilha acima para subir.';
+            cont.innerHTML = dados.map(d => `
+                <div class="border-bottom py-2">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <span class="fw-bold" style="color: var(--fc-primaria);">${escaparHtml(d.tipo)}</span>
+                            <small class="text-muted d-block">${escaparHtml(d.data)} · ${escaparHtml(d.supervisor)}${d.obs ? ' · ' + escaparHtml(d.obs) : ''}</small>
+                        </div>
+                        <span class="fw-bold me-2">${formatarReal(d.valor)}</span>
+                        ${d.url ? '<a href="' + escaparHtml(d.url) + '" target="_blank" title="Abrir comprovante">🧾</a>' : ''}
+                    </div>
+                </div>`).join('') || '<div class="text-muted text-center py-2">Nada aqui.</div>';
+            return;
+        }
+
+        document.getElementById('bi-dica').innerText = 'Agrupado por ' + hier[nivel].rotulo + '. Clique na linha para descer um nível.';
+
+        const grupos = {};
+        dados.forEach(d => {
+            const chave = String(d[hier[nivel].campo] || '(vazio)');
+            if (!grupos[chave]) grupos[chave] = { valor: 0, qtd: 0 };
+            grupos[chave].valor += Number(d.valor || 0);
+            grupos[chave].qtd++;
+        });
+
+        const ordenados = Object.keys(grupos).sort((a, b) => grupos[b].valor - grupos[a].valor);
+        const maior = ordenados.length ? grupos[ordenados[0]].valor : 0;
+
+        cont.innerHTML = ordenados.map(k => {
+            const g = grupos[k];
+            const pct = total > 0 ? (g.valor / total * 100) : 0;
+            const larg = maior > 0 ? (g.valor / maior * 100) : 0;
+            return `
+                <div class="border-bottom py-2" style="cursor:pointer;" onclick="biDrill('${escaparHtml(k).replace(/'/g, "\\'")}')">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1 me-2" style="min-width:0;">
+                            <div class="fw-bold text-truncate" style="color: var(--fc-primaria);">${escaparHtml(k)}</div>
+                            <div class="progress mt-1" style="height:5px;">
+                                <div class="progress-bar" style="width:${larg.toFixed(0)}%; background-color: var(--fc-primaria);"></div>
+                            </div>
+                        </div>
+                        <div class="text-end me-2" style="min-width:100px;">
+                            <div class="fw-bold">${formatarReal(g.valor)}</div>
+                            <small class="text-muted">${pct.toFixed(0)}% · ${g.qtd}</small>
+                        </div>
+                        <span class="text-muted">›</span>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
+    function exportarBiVisao() {
+        const hier = BI_HIER[biEstado.dimensao];
+        const nivel = biEstado.caminho.length;
+        const dados = biFiltrados();
+        if (!dados.length) return alert('Não há dados nesta visão.');
+        if (nivel >= hier.length) return exportarBiLancamentos();
+
+        const grupos = {};
+        dados.forEach(d => {
+            const chave = String(d[hier[nivel].campo] || '(vazio)');
+            if (!grupos[chave]) grupos[chave] = { valor: 0, qtd: 0 };
+            grupos[chave].valor += Number(d.valor || 0);
+            grupos[chave].qtd++;
+        });
+
+        let total = 0;
+        Object.keys(grupos).forEach(k => total += grupos[k].valor);
+        const filtroTxt = biEstado.caminho.map(p => p.valor).join(' > ') || 'Todos';
+
+        let csv = [["Filtro aplicado", "Agrupado por", "Item", "Lançamentos", "Valor", "% do total"].join(";")];
+        Object.keys(grupos).sort((a, b) => grupos[b].valor - grupos[a].valor).forEach(k => {
+            const pct = total > 0 ? (grupos[k].valor / total * 100) : 0;
+            csv.push([escapeCsvDesp(filtroTxt), escapeCsvDesp(hier[nivel].rotulo), escapeCsvDesp(k), escapeCsvDesp(grupos[k].qtd),
+                      escapeCsvDesp(grupos[k].valor.toFixed(2).replace('.', ',')), escapeCsvDesp(pct.toFixed(1).replace('.', ',') + '%')].join(";"));
+        });
+        csv.push(["", "", escapeCsvDesp("TOTAL"), "", escapeCsvDesp(total.toFixed(2).replace('.', ',')), ""].join(";"));
+        baixarCsv(csv, 'BI_Despesas_por_' + hier[nivel].rotulo + '.csv');
+    }
+
+    function exportarBiLancamentos() {
+        const dados = biFiltrados();
+        if (!dados.length) return alert('Não há lançamentos nesta visão.');
+        baixarCsv(linhasCsvLancamentos(dados), 'BI_Despesas_Lancamentos.csv');
+    }
+
     // ---------- Inicialização independente (não interfere no Folha de Ponto) ----------
     document.addEventListener('DOMContentLoaded', () => {
         const inputValor = document.getElementById('desp-valor');
@@ -1381,6 +1793,7 @@
             if (!dash || dash.classList.contains('hidden')) return;
             carregarTiposDespesa();
             popularProjetosAtivosSup();
+            atualizarAvisoEscopo();
             const chave = chaveProjeto(projetoAtivo);
             if (chave !== chaveProjetoAnterior) {
                 chaveProjetoAnterior = chave;
