@@ -61,6 +61,20 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); 
             border: 1px solid #eaeaea;
         }
+
+        /* ############ NOVO: abas Folha de Ponto / Despesas ############ */
+        #abas-painel .aba-btn {
+            font-size: 0.95rem;
+            color: #6c757d;
+        }
+        #abas-painel .aba-btn.active {
+            color: var(--fc-primaria) !important;
+            border-bottom-color: transparent;
+        }
+        @media (max-width: 575.98px) {
+            .fc-container { padding: 15px; }
+            #abas-painel .aba-btn { font-size: 0.78rem; padding-top: 8px; padding-bottom: 8px; }
+        }
     </style>
 </head>
 <body class="p-3">
@@ -110,12 +124,12 @@
         </div>
 
         <!-- ############ NOVO: ABAS FOLHA DE PONTO / DESPESAS ############ -->
-        <ul class="nav nav-tabs mb-4" id="abas-painel">
+        <ul class="nav nav-tabs nav-fill flex-nowrap mb-4" id="abas-painel">
             <li class="nav-item">
-                <button class="nav-link active fw-bold" data-bs-toggle="tab" data-bs-target="#tab-ponto" type="button">🕒 Folha de Ponto</button>
+                <button class="nav-link active fw-bold text-nowrap px-1 aba-btn" data-bs-toggle="tab" data-bs-target="#tab-ponto" type="button">🕒 Folha de Ponto</button>
             </li>
             <li class="nav-item">
-                <button class="nav-link fw-bold" data-bs-toggle="tab" data-bs-target="#tab-despesas" type="button">💰 Despesas</button>
+                <button class="nav-link fw-bold text-nowrap px-1 aba-btn" data-bs-toggle="tab" data-bs-target="#tab-despesas" type="button">💰 Despesas</button>
             </li>
         </ul>
 
