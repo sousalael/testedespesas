@@ -104,7 +104,7 @@
                     <option value="">-- Carregando projetos de hoje... --</option>
                 </select>
 
-                <label class="form-label fw-bold text-primary mb-1">🗂️ Ou consulte um Projeto Encerrado:</label>
+                <label class="form-label fw-bold text-primary mb-1">🗂️ Projetos Encerrados:</label>
                 <div class="input-group">
                     <select id="sel-proj-encerrados-sup" class="form-select" onchange="carregarProjetoEncerradoSup()">
                         <option value="">-- Clique em Carregar Histórico --</option>
@@ -221,11 +221,7 @@
         <!-- ############ LISTA GERAL DE DESPESAS COM SELETOR DE MÊS ############ -->
         <div class="card mb-4 border-0 shadow-sm bg-light">
             <div class="card-body">
-                <h6 class="fw-bold text-primary d-flex align-items-center mb-3 flex-wrap">
-                    Todas as Despesas:
-                    <span id="cnt-geral-despesas" class="badge bg-primary ms-2 rounded-pill shadow-sm" style="font-size: 0.95rem;">0</span>
-                    <span class="ms-auto fw-bold" style="color: var(--fc-primaria);">Total: <span id="tot-geral-despesas">R$ 0,00</span></span>
-                </h6>
+                <h6 class="fw-bold text-primary mb-3">Todas as Despesas</h6>
                 <label class="form-label fw-bold text-primary mb-1">Período:</label>
                 <select id="desp-geral-mes" class="form-select form-select-sm mb-2"></select>
                 <div class="row g-2 mb-3">
@@ -233,6 +229,33 @@
                     <div class="col-5"><input type="date" id="desp-geral-fim" class="form-control form-control-sm"></div>
                     <div class="col-2"><button class="btn btn-primary btn-sm w-100 fw-bold" id="btn-buscar-geral" onclick="buscarDespesasGeral()">🔍</button></div>
                 </div>
+
+                <div id="bloco-filtros-geral" class="hidden mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-primary mb-1 small">Supervisor / Diretor:</label>
+                            <div id="filtro-supervisor" class="border rounded p-2 bg-white small" style="max-height: 110px; overflow-y: auto;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-primary mb-1 small">Cliente / Centro de Custo:</label>
+                            <div id="filtro-cliente" class="border rounded p-2 bg-white small" style="max-height: 110px; overflow-y: auto;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-primary mb-1 small">Grupo:</label>
+                            <div id="filtro-grupo" class="border rounded p-2 bg-white small" style="max-height: 110px; overflow-y: auto;"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-primary mb-1 small">Forma de Pagamento:</label>
+                            <div id="filtro-forma" class="border rounded p-2 bg-white small" style="max-height: 110px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center mb-2">
+                    <span id="cnt-geral-despesas" class="badge bg-primary rounded-pill shadow-sm" style="font-size: 0.85rem;">0</span>
+                    <span class="ms-auto fw-bold" style="color: var(--fc-primaria);">Total: <span id="tot-geral-despesas">R$ 0,00</span></span>
+                </div>
+
                 <div class="table-responsive shadow-sm rounded">
                     <table class="table table-sm table-bordered align-middle mb-0">
                         <thead class="table-light">
@@ -246,7 +269,7 @@
                             </tr>
                         </thead>
                         <tbody id="lista-geral-despesas">
-                            <tr><td colspan="6" class="text-center text-muted">Carregando...</td></tr>
+                            <tr><td colspan="6" class="text-center text-muted">Selecione o período e clique em 🔍 para carregar.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1975,7 +1998,9 @@
             await chamarApi({
                 action: 'editarDespesa', cpf: getCpfLogado(),
                 despesa: {
-                    rowId: edicaoDespesaAtual.rowId, timestampOriginal: edicaoDespesaAtual.timestamp,
+                    rowId: edicaoDespesaAtual.rowId,
+                    tipoOriginal: edicaoDespesaAtual.tipo,
+                    cpfSupervisorOriginal: edicaoDespesaAtual.cpfSupervisor || edicaoDespesaAtual.supervisor || '',
                     data: destino.data, cliente: destino.cliente, unidade: destino.unidade,
                     tipo: tipo, valor: valor, formaPagamento: forma, obs: obs
                 }
@@ -2128,23 +2153,68 @@
     // Usa a mesma acao getDespesasRelatorio — fonte unica de permissao.
     // ============================================================
     let despesasGeralDados = [];
+    let despesasGeralCompleto = []; // dados brutos do servidor, antes dos filtros
     let despGeralInicializado = false;
 
     async function buscarDespesasGeral() {
         const ini = document.getElementById('desp-geral-ini').value;
         const fim = document.getElementById('desp-geral-fim').value;
-        if (!ini || !fim) return;
+        if (!ini || !fim) return alert('Selecione o período.');
 
         const btn = document.getElementById('btn-buscar-geral');
         btn.innerText = '...'; btn.disabled = true;
         try {
-            despesasGeralDados = await buscarDespesasPeriodo(ini, fim);
-            renderDespesasGeral();
+            despesasGeralCompleto = await buscarDespesasPeriodo(ini, fim);
+            montarFiltrosGeral();
+            aplicarFiltrosGeral();
         } catch (err) {
             document.getElementById('lista-geral-despesas').innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + escaparHtml(err.message) + '</td></tr>';
         } finally {
             btn.innerText = '🔍'; btn.disabled = false;
         }
+    }
+
+    function montarFiltrosGeral() {
+        const blocoFiltros = document.getElementById('bloco-filtros-geral');
+        if (!despesasGeralCompleto.length) { blocoFiltros.classList.add('hidden'); return; }
+
+        blocoFiltros.classList.remove('hidden');
+
+        const extrair = (campo) => [...new Set(despesasGeralCompleto.map(d => String(d[campo] || '(vazio)')))].sort();
+
+        const montarCheckboxes = (containerId, valores, prefixo) => {
+            document.getElementById(containerId).innerHTML = valores.map((v, i) => `
+                <div class="form-check mb-0">
+                    <input class="form-check-input filtro-geral-chk" type="checkbox" checked value="${escaparHtml(v)}" id="${prefixo}-${i}" data-grupo="${prefixo}" onchange="aplicarFiltrosGeral()">
+                    <label class="form-check-label" for="${prefixo}-${i}" style="cursor:pointer;">${escaparHtml(v)}</label>
+                </div>`).join('');
+        };
+
+        montarCheckboxes('filtro-supervisor', extrair('supervisor'), 'fsup');
+        montarCheckboxes('filtro-cliente', extrair('cliente'), 'fcli');
+        montarCheckboxes('filtro-grupo', extrair('grupo'), 'fgrp');
+        montarCheckboxes('filtro-forma', extrair('formaPagamento'), 'ffrm');
+    }
+
+    function obterMarcados(prefixo) {
+        const marcados = {};
+        document.querySelectorAll('input[data-grupo="' + prefixo + '"]:checked').forEach(el => marcados[el.value] = true);
+        return marcados;
+    }
+
+    function aplicarFiltrosGeral() {
+        const mSup = obterMarcados('fsup');
+        const mCli = obterMarcados('fcli');
+        const mGrp = obterMarcados('fgrp');
+        const mFrm = obterMarcados('ffrm');
+
+        despesasGeralDados = despesasGeralCompleto.filter(d =>
+            mSup[String(d.supervisor || '(vazio)')] &&
+            mCli[String(d.cliente || '(vazio)')] &&
+            mGrp[String(d.grupo || '(vazio)')] &&
+            mFrm[String(d.formaPagamento || '(vazio)')]
+        );
+        renderDespesasGeral();
     }
 
     function renderDespesasGeral() {
@@ -2159,7 +2229,7 @@
         document.getElementById('tot-geral-despesas').innerText = formatarReal(total);
 
         if (!despesasGeralDados.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhuma despesa no período.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Nenhuma despesa encontrada.</td></tr>';
             return;
         }
 
@@ -2171,6 +2241,7 @@
                 </td>
                 <td>
                     <span class="fw-bold small">${escaparHtml(d.tipo)}</span>
+                    ${d.grupo ? '<small class="text-muted d-block">' + escaparHtml(d.grupo) + '</small>' : ''}
                     ${d.formaPagamento ? '<small class="text-muted d-block">' + escaparHtml(d.formaPagamento) + '</small>' : ''}
                     ${d.obs ? '<small class="text-muted d-block">' + escaparHtml(d.obs) + '</small>' : ''}
                 </td>
@@ -2956,7 +3027,9 @@
 
             if (!despGeralInicializado && getCpfLogado()) {
                 despGeralInicializado = true;
-                popularSeletorMes('desp-geral-mes', 'desp-geral-ini', 'desp-geral-fim', buscarDespesasGeral);
+                // Apenas popula o seletor de mes, sem carregar automaticamente.
+                // O usuario clica em 🔍 quando quiser.
+                popularSeletorMes('desp-geral-mes', 'desp-geral-ini', 'desp-geral-fim', null);
             }
 
             const chave = chaveProjeto(projetoAtivo);
