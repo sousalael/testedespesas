@@ -81,7 +81,7 @@
 <div class="container fc-container mx-auto">
     
     <div id="view-login">
-        <h4 class="mb-3 text-primary fw-bold">Acesso Gestão Formula Code</h4>
+        <h4 class="mb-3 text-primary fw-bold">Acesso Gestão</h4>
         <!-- ALTERADO (autorizado): a selecao de projeto saiu da tela de login e foi para o painel.
              O <select> original permanece aqui, apenas OCULTO, para que a funcao entrar()
              e o window.onload do Folha de Ponto continuem funcionando exatamente como antes. -->
@@ -89,7 +89,7 @@
             <option value="">-- Selecione o Projeto --</option>
         </select>
         
-        <label class="form-label fw-bold">Login</label>
+        <label class="form-label fw-bold">CPF do Supervisor ou Diretor:</label>
         <input type="text" id="cpf-sup" class="form-control mb-3 cpf-mask" placeholder="000.000.000-00" maxlength="14">
         <button class="btn btn-primary w-100 py-2 fw-bold" onclick="entrar()">Entrar no Painel</button>
     </div>
@@ -104,7 +104,7 @@
                     <option value="">-- Carregando projetos de hoje... --</option>
                 </select>
 
-                <label class="form-label fw-bold text-primary mb-1">🗂️ Projetos Encerrados:</label>
+                <label class="form-label fw-bold text-primary mb-1">🗂️ Ou consulte um Projeto Encerrado:</label>
                 <div class="input-group">
                     <select id="sel-proj-encerrados-sup" class="form-select" onchange="carregarProjetoEncerradoSup()">
                         <option value="">-- Clique em Carregar Histórico --</option>
@@ -222,33 +222,33 @@
         <div class="card mb-4 border-0 shadow-sm bg-light">
             <div class="card-body">
                 <h6 class="fw-bold text-primary mb-3">Todas as Despesas</h6>
+
+                <!-- Filtros em formato de botão-dropdown, ACIMA do período -->
+                <div class="d-flex flex-wrap gap-2 mb-3" id="barra-filtros-geral">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn-filtro-supervisor">👤 Supervisor</button>
+                        <div class="dropdown-menu p-2" style="min-width: 220px; max-height: 260px; overflow-y: auto;" id="drop-filtro-supervisor"></div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn-filtro-cliente">🏢 Cliente</button>
+                        <div class="dropdown-menu p-2" style="min-width: 220px; max-height: 260px; overflow-y: auto;" id="drop-filtro-cliente"></div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn-filtro-grupo">📂 Grupo</button>
+                        <div class="dropdown-menu p-2" style="min-width: 220px; max-height: 260px; overflow-y: auto;" id="drop-filtro-grupo"></div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" id="btn-filtro-forma">💳 Pagamento</button>
+                        <div class="dropdown-menu p-2" style="min-width: 220px; max-height: 260px; overflow-y: auto;" id="drop-filtro-forma"></div>
+                    </div>
+                </div>
+
                 <label class="form-label fw-bold text-primary mb-1">Período:</label>
                 <select id="desp-geral-mes" class="form-select form-select-sm mb-2"></select>
                 <div class="row g-2 mb-3">
                     <div class="col-5"><input type="date" id="desp-geral-ini" class="form-control form-control-sm"></div>
                     <div class="col-5"><input type="date" id="desp-geral-fim" class="form-control form-control-sm"></div>
                     <div class="col-2"><button class="btn btn-primary btn-sm w-100 fw-bold" id="btn-buscar-geral" onclick="buscarDespesasGeral()">🔍</button></div>
-                </div>
-
-                <div id="bloco-filtros-geral" class="hidden mb-3">
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-primary mb-1 small">Supervisor / Diretor:</label>
-                            <div id="filtro-supervisor" class="border rounded p-2 bg-white small" style="max-height: 110px; overflow-y: auto;"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-primary mb-1 small">Cliente / Centro de Custo:</label>
-                            <div id="filtro-cliente" class="border rounded p-2 bg-white small" style="max-height: 110px; overflow-y: auto;"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-primary mb-1 small">Grupo:</label>
-                            <div id="filtro-grupo" class="border rounded p-2 bg-white small" style="max-height: 110px; overflow-y: auto;"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-bold text-primary mb-1 small">Forma de Pagamento:</label>
-                            <div id="filtro-forma" class="border rounded p-2 bg-white small" style="max-height: 110px; overflow-y: auto;"></div>
-                        </div>
-                    </div>
                 </div>
 
                 <div class="d-flex align-items-center mb-2">
@@ -2153,8 +2153,9 @@
     // Usa a mesma acao getDespesasRelatorio — fonte unica de permissao.
     // ============================================================
     let despesasGeralDados = [];
-    let despesasGeralCompleto = []; // dados brutos do servidor, antes dos filtros
+    let despesasGeralCompleto = [];
     let despGeralInicializado = false;
+    let filtrosGeralEstado = {}; // { prefixo: Set de valores marcados }
 
     async function buscarDespesasGeral() {
         const ini = document.getElementById('desp-geral-ini').value;
@@ -2165,7 +2166,7 @@
         btn.innerText = '...'; btn.disabled = true;
         try {
             despesasGeralCompleto = await buscarDespesasPeriodo(ini, fim);
-            montarFiltrosGeral();
+            atualizarFiltrosGeral();
             aplicarFiltrosGeral();
         } catch (err) {
             document.getElementById('lista-geral-despesas').innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + escaparHtml(err.message) + '</td></tr>';
@@ -2174,39 +2175,77 @@
         }
     }
 
-    function montarFiltrosGeral() {
-        const blocoFiltros = document.getElementById('bloco-filtros-geral');
-        if (!despesasGeralCompleto.length) { blocoFiltros.classList.add('hidden'); return; }
+    // Monta ou atualiza o conteúdo de cada dropdown, preservando seleções anteriores
+    function atualizarFiltrosGeral() {
+        const configs = [
+            { prefixo: 'supervisor', campo: 'supervisor', containerId: 'drop-filtro-supervisor' },
+            { prefixo: 'cliente',    campo: 'cliente',    containerId: 'drop-filtro-cliente' },
+            { prefixo: 'grupo',      campo: 'grupo',      containerId: 'drop-filtro-grupo' },
+            { prefixo: 'forma',      campo: 'formaPagamento', containerId: 'drop-filtro-forma' }
+        ];
 
-        blocoFiltros.classList.remove('hidden');
+        configs.forEach(cfg => {
+            const valores = [...new Set(despesasGeralCompleto.map(d => String(d[cfg.campo] || '(vazio)')))].sort();
+            const cont = document.getElementById(cfg.containerId);
+            const estadoAnterior = filtrosGeralEstado[cfg.prefixo];
 
-        const extrair = (campo) => [...new Set(despesasGeralCompleto.map(d => String(d[campo] || '(vazio)')))].sort();
+            // Se já existia estado, preserva; valores novos entram marcados
+            let marcados;
+            if (estadoAnterior) {
+                marcados = new Set();
+                valores.forEach(v => {
+                    if (estadoAnterior.has(v)) marcados.add(v);
+                    else if (!estadoAnterior.has('__inicializado__')) marcados.add(v);
+                    else marcados.add(v); // valor novo = marcado
+                });
+            } else {
+                marcados = new Set(valores);
+            }
+            marcados.add('__inicializado__');
+            filtrosGeralEstado[cfg.prefixo] = marcados;
 
-        const montarCheckboxes = (containerId, valores, prefixo) => {
-            document.getElementById(containerId).innerHTML = valores.map((v, i) => `
-                <div class="form-check mb-0">
-                    <input class="form-check-input filtro-geral-chk" type="checkbox" checked value="${escaparHtml(v)}" id="${prefixo}-${i}" data-grupo="${prefixo}" onchange="aplicarFiltrosGeral()">
-                    <label class="form-check-label" for="${prefixo}-${i}" style="cursor:pointer;">${escaparHtml(v)}</label>
-                </div>`).join('');
-        };
+            const todosMarc = valores.every(v => marcados.has(v));
 
-        montarCheckboxes('filtro-supervisor', extrair('supervisor'), 'fsup');
-        montarCheckboxes('filtro-cliente', extrair('cliente'), 'fcli');
-        montarCheckboxes('filtro-grupo', extrair('grupo'), 'fgrp');
-        montarCheckboxes('filtro-forma', extrair('formaPagamento'), 'ffrm');
+            cont.innerHTML =
+                '<div class="form-check mb-1 border-bottom pb-1"><input class="form-check-input" type="checkbox" ' + (todosMarc ? 'checked' : '') + ' id="chk-todos-' + cfg.prefixo + '" onchange="toggleTodosFiltro(\'' + cfg.prefixo + '\', this.checked)"><label class="form-check-label fw-bold" for="chk-todos-' + cfg.prefixo + '" style="cursor:pointer;">Selecionar todas</label></div>' +
+                valores.map((v, i) =>
+                    '<div class="form-check mb-0"><input class="form-check-input filtro-chk-' + cfg.prefixo + '" type="checkbox" ' + (marcados.has(v) ? 'checked' : '') + ' value="' + escaparHtml(v) + '" id="chk-' + cfg.prefixo + '-' + i + '" onchange="onFiltroChange(\'' + cfg.prefixo + '\')"><label class="form-check-label" for="chk-' + cfg.prefixo + '-' + i + '" style="cursor:pointer;">' + escaparHtml(v) + '</label></div>'
+                ).join('');
+        });
+    }
+
+    function toggleTodosFiltro(prefixo, marcar) {
+        document.querySelectorAll('.filtro-chk-' + prefixo).forEach(el => el.checked = marcar);
+        onFiltroChange(prefixo);
+    }
+
+    function onFiltroChange(prefixo) {
+        // Atualiza o estado persistido
+        const marcados = new Set();
+        marcados.add('__inicializado__');
+        document.querySelectorAll('.filtro-chk-' + prefixo + ':checked').forEach(el => marcados.add(el.value));
+        filtrosGeralEstado[prefixo] = marcados;
+
+        // Atualiza o "Selecionar todas"
+        const total = document.querySelectorAll('.filtro-chk-' + prefixo).length;
+        const marc = document.querySelectorAll('.filtro-chk-' + prefixo + ':checked').length;
+        const chkTodos = document.getElementById('chk-todos-' + prefixo);
+        if (chkTodos) { chkTodos.checked = (marc === total); chkTodos.indeterminate = (marc > 0 && marc < total); }
+
+        aplicarFiltrosGeral();
     }
 
     function obterMarcados(prefixo) {
-        const marcados = {};
-        document.querySelectorAll('input[data-grupo="' + prefixo + '"]:checked').forEach(el => marcados[el.value] = true);
-        return marcados;
+        const m = {};
+        document.querySelectorAll('.filtro-chk-' + prefixo + ':checked').forEach(el => m[el.value] = true);
+        return m;
     }
 
     function aplicarFiltrosGeral() {
-        const mSup = obterMarcados('fsup');
-        const mCli = obterMarcados('fcli');
-        const mGrp = obterMarcados('fgrp');
-        const mFrm = obterMarcados('ffrm');
+        const mSup = obterMarcados('supervisor');
+        const mCli = obterMarcados('cliente');
+        const mGrp = obterMarcados('grupo');
+        const mFrm = obterMarcados('forma');
 
         despesasGeralDados = despesasGeralCompleto.filter(d =>
             mSup[String(d.supervisor || '(vazio)')] &&
@@ -2569,6 +2608,7 @@
     // Financeiro: Despesas x Provisionamento, BI Financeiro, Provisionamento e Adiantamento
     // ============================================================
     let acertoDados = [];
+    let acertoDiagnostico = null;
 
     async function carregarDespXProv() {
         const ini = document.getElementById('fin-ini').value;
@@ -2580,6 +2620,7 @@
         try {
             const res = await chamarApi({ action: 'getAcertoContas', cpf: getCpfLogado(), filtros: { dataIni: ini, dataFim: fim } });
             acertoDados = res.lista || [];
+            acertoDiagnostico = res.diagnostico || null;
             renderDespXProv();
         } catch (err) {
             document.getElementById('fin-lista').innerHTML = '<div class="text-center text-danger py-3">Erro ao carregar: ' + escaparHtml(err.message) + '</div>';
@@ -2594,7 +2635,16 @@
         const btnExp = document.getElementById('btn-exportar-fin');
 
         if (!acertoDados.length) {
-            cont.innerHTML = '<div class="text-center text-muted py-3">Nenhum movimento com recurso próprio neste período.</div>';
+            let msg = 'Nenhuma despesa paga com recurso próprio por supervisores neste período.';
+            if (acertoDiagnostico) {
+                const d = acertoDiagnostico;
+                if (d.totalLidas === 0) msg = 'A aba Despesas está vazia.';
+                else if (d.noPerido === 0) msg = d.totalLidas + ' despesas na base, mas nenhuma no período selecionado.';
+                else if (d.comRecursoProprio === 0) msg = d.noPerido + ' despesas no período, mas nenhuma com forma de pagamento marcada como recurso próprio na Config_Pagamento. Verifique se o texto na coluna K bate exatamente com o que está cadastrado.';
+                else if (d.comCpf === 0) msg = d.comRecursoProprio + ' despesas com recurso próprio, mas nenhuma com CPF do supervisor identificável (coluna J vazia e nome não encontrado na base).';
+                else if (d.saoSupervisor === 0) msg = d.comCpf + ' despesas com recurso próprio identificadas, mas nenhuma lançada por perfil SUPERVISOR. Despesas da Diretoria não entram nesta análise.';
+            }
+            cont.innerHTML = '<div class="text-center text-muted py-3">' + escaparHtml(msg) + '</div>';
             rodape.classList.add('hidden');
             btnExp.classList.add('hidden');
             return;
